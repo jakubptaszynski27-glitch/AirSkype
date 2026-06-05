@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AirSkype 2.0</title>
+    <title>AirSkype 3.0</title>
+    <!-- PeerJS for WebRTC Connections -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
@@ -30,39 +31,81 @@
             overflow: hidden;
         }
 
-        /* COLUMN 1: Navigation */
+        /* SIDEBAR STRUCTURE FROM "Bez tytułu.png" */
         .sidebar {
-            width: 200px;
-            padding: 20px 10px;
+            width: 260px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
             box-sizing: border-box;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
+            border-right: 2px solid var(--main-color);
             z-index: 10;
         }
 
-        .menu-btn {
+        /* Profile Block on Top */
+        .profile-top-block {
+            border: 3px solid var(--main-color);
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            background: var(--box-bg);
+        }
+        .profile-top-avatar {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 2px solid var(--main-color);
+            background: #fff;
+        }
+
+        /* Action elements styled strictly like the blue outlines in the sketch */
+        .skype-input-box {
+            border: 3px solid var(--main-color);
+            background: var(--box-bg);
+            padding: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-color);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .skype-input-box::placeholder { color: var(--main-color); opacity: 0.6; }
+
+        .skype-action-btn {
+            border: 3px solid var(--main-color);
+            background: var(--box-bg);
+            color: var(--text-color);
+            font-size: 18px;
+            font-weight: bold;
+            padding: 8px;
+            text-align: left;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            transition: all 0.2s;
+        }
+        .skype-action-btn:hover, .skype-action-btn.active {
             background-color: var(--main-color);
             color: var(--button-text);
-            font-size: 20px;
+        }
+
+        /* App Footer Signature from sketch */
+        .sidebar-footer {
+            margin-top: auto;
             font-weight: bold;
-            padding: 10px;
-            border: none;
-            text-align: center;
-            cursor: pointer;
-            transition: opacity 0.2s, transform 0.1s;
+            font-size: 20px;
+            line-height: 1.2;
         }
 
-        .menu-btn:hover, .menu-btn.active {
-            opacity: 0.9;
-            transform: scale(1.02);
-            box-shadow: 0 0 8px var(--main-color);
-        }
-
-        /* TAB CONTAINERS */
-        .tab-container {
+        /* MAIN CONTENT AREA */
+        .main-area {
             flex: 1;
             display: flex;
             height: 100%;
@@ -75,285 +118,221 @@
             height: 100%;
             display: none;
             box-sizing: border-box;
+            padding: 25px;
+            overflow-y: auto;
         }
+        .tab-content.active { display: flex; flex-direction: column; }
 
-        .tab-content.active {
+        /* CONTACT LIST & CHAT SPLIT */
+        .chats-split-view {
             display: flex;
+            width: 100%;
+            height: 100%;
+            margin: -25px; /* Reset padding */
         }
 
-        /* COLUMN 2: Contacts */
-        .contacts-column {
-            width: 300px;
+        .contacts-list-pane {
+            width: 250px;
+            border-right: 2px solid var(--main-color);
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            padding: 20px 10px;
-            box-sizing: border-box;
+            gap: 6px;
             overflow-y: auto;
         }
 
-        .contact-item-btn {
-            background-color: var(--main-color);
-            color: var(--button-text);
-            font-size: 22px;
-            font-weight: bold;
-            padding: 12px 20px;
-            border: none;
-            text-align: left;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .contact-avatar {
-            width: 32px;
-            height: 32px;
-            background-color: white;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        /* COLUMN 3: Main Action Window */
-        .action-column {
+        .chat-main-pane {
             flex: 1;
-            margin: 20px;
-            border: 4px solid var(--main-color);
-            background-color: var(--box-bg);
-            box-sizing: border-box;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             position: relative;
-            backdrop-filter: blur(5px);
         }
 
-        .action-header-buttons {
-            display: flex;
-        }
-
-        .action-btn {
+        /* CHAT BUBBLES */
+        .messages-container {
             flex: 1;
-            background-color: var(--main-color);
-            color: var(--button-text);
-            font-size: 18px;
-            font-weight: bold;
-            padding: 12px;
-            border: none;
-            cursor: pointer;
-            border-bottom: 4px solid var(--main-color);
-        }
-
-        .action-btn:first-child { border-right: 4px solid white; }
-
-        .welcome-screen {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 70px;
-            font-weight: bold;
-            color: #bbf0ff;
-        }
-
-        /* CHAT SYSTEM */
-        .chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+            border: 3px solid var(--main-color);
+            background: rgba(255, 255, 255, 0.85);
             padding: 15px;
-            box-sizing: border-box;
-            height: calc(100% - 50px);
-        }
-
-        .messages-box {
-            flex: 1;
+            margin: 15px 0;
             overflow-y: auto;
-            border: 2px solid var(--main-color);
-            padding: 10px;
-            margin-bottom: 10px;
-            background: rgba(255, 255, 255, 0.8);
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
         }
+        .msg-bubble { padding: 8px 14px; border-radius: 6px; max-width: 65%; font-weight: bold; }
+        .msg-bubble.my { background: var(--main-color); color: var(--button-text); align-self: flex-end; }
+        .msg-bubble.remote { background: #e5e5e5; color: #333; align-self: flex-start; }
 
-        .msg { padding: 6px 12px; border-radius: 4px; max-width: 70%; font-weight: bold; }
-        .msg.my { background: var(--main-color); color: white; align-self: flex-end; }
-        .msg.remote { background: #e0e0e0; color: #333; align-self: flex-start; }
-
-        .chat-input-area { display: flex; gap: 10px; }
-        .chat-input-area input { flex: 1; border: 3px solid var(--main-color); padding: 8px; font-size: 16px; }
-
-        /* VIDEO CALL ENGINE */
-        .video-box {
-            display: none;
-            position: absolute;
-            top: 60px; left: 0; width: 100%; height: calc(100% - 60px);
-            background: #000; z-index: 5; flex-direction: column;
-        }
-        .video-streams { flex: 1; display: flex; gap: 10px; padding: 10px; }
-        video { flex: 1; border: 2px solid var(--main-color); background: #222; border-radius: 8px; }
-
-        /* ================= KAFELKOWY INTERFEJS (GRID) FOR TABS ================= */
-        .standard-padding {
-            padding: 30px;
-            width: 100%;
-            box-sizing: border-box;
-            overflow-y: auto;
-        }
-
+        /* GRID FOR TILE CARDS */
         .grid-layout {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
-            width: 100%;
-            max-width: 1000px;
             margin-top: 15px;
+            width: 100%;
+            max-width: 900px;
         }
-
         .tile-card {
             border: 3px solid var(--main-color);
             background: var(--box-bg);
-            padding: 20px;
-            border-radius: 4px;
-            box-sizing: border-box;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
         }
+        .tile-card h3 { margin: 0; font-size: 18px; }
 
-        .tile-card h3 { margin: 0 0 5px 0; font-size: 20px; }
+        /* VIDEO STREAM LAYER */
+        .video-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 20; flex-direction: column;
+        }
+        .video-windows { flex: 1; display: flex; gap: 10px; padding: 15px; }
+        video { flex: 1; border: 3px solid var(--main-color); background: #111; border-radius: 6px; }
 
-        input[type="text"], select {
+        /* RECENT POSTS STYLE */
+        .post-item {
             border: 3px solid var(--main-color);
-            padding: 8px;
-            font-size: 16px;
-            width: 100%;
-            box-sizing: border-box;
-            background: var(--bg-color);
-            color: inherit;
+            background: var(--box-bg);
+            padding: 15px;
+            margin-top: 10px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
         }
-
-        /* AVATAR SELECTOR */
-        .avatar-picker { display: flex; gap: 10px; margin-bottom: 10px; justify-content: center; }
-        .avatar-option { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer; }
-        .avatar-option.selected { border-color: var(--main-color); box-shadow: 0 0 8px var(--main-color); }
-
-        .profile-badge { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--main-color); }
     </style>
 </head>
 <body>
 
+    <!-- COLUMN 1: SIDEBAR (Strictly based on Bez tytułu.png layout) -->
     <div class="sidebar">
-        <button class="menu-btn active" id="chats-btn" onclick="switchTab('chats')">Chats</button>
-        <button class="menu-btn" id="personalize-btn" onclick="switchTab('personalize')">Personalize</button>
-        <button class="menu-btn" id="posts-btn" onclick="switchTab('posts')">Posts</button>
-        <button class="menu-btn" id="about-btn" onclick="switchTab('about')">About You</button>
-        
-        <div style="font-size:11px; margin-top:auto; word-break:break-all; opacity:0.7;">
-            Network Address:<br><b id="my-peer-id">Connecting...</b>
+        <!-- Top Profile Row -->
+        <div class="profile-top-block" onclick="switchTab('about')" id="profile-trigger">
+            <div class="profile-top-avatar" id="avatar-indicator"></div>
+            <span id="name-indicator">(Nazwa)</span>
+        </div>
+
+        <!-- Live Search Field -->
+        <input type="text" class="skype-input-box" id="search-input" placeholder="Wyszukaj / Search..." oninput="filterContacts()">
+
+        <!-- Quick Actions & Tabs -->
+        <button class="skype-action-btn" onclick="openAddContact()"><span class="lang-txt" data-en="Add Contact" data-pl="Dodaj Kontakt">Dodaj Kontakt</span></button>
+        <button class="skype-action-btn active" id="chats-nav-btn" onclick="switchTab('chats')"><span class="lang-txt" data-en="Chats" data-pl="Rozmowy">Rozmowy</span></button>
+        <button class="skype-action-btn" id="personalize-nav-btn" onclick="switchTab('personalize')"><span class="lang-txt" data-en="Personalize" data-pl="Personalizuj">Personalizuj</span></button>
+        <button class="skype-action-btn" id="posts-nav-btn" onclick="switchTab('posts')">Posts</button>
+
+        <!-- Brand Footer Sign from sketch -->
+        <div class="sidebar-footer">
+            AirSkype<br>Version 3.0
         </div>
     </div>
 
-    <div class="tab-container">
+    <!-- MAIN VIEW AREA -->
+    <div class="main-area">
 
+        <!-- ================= CHATS VIEW ================= -->
         <div id="tab-chats" class="tab-content active">
-            <div class="contacts-column" id="contacts-list-container"></div>
+            <div class="chats-split-view">
+                <!-- Middle Pane: Filtered Contacts list -->
+                <div class="contacts-list-pane" id="contacts-zone"></div>
 
-            <div class="action-column">
-                <div class="action-header-buttons">
-                    <button class="action-btn" onclick="openAddContactForm()">Add Contact</button>
-                    <button class="action-btn" onclick="deleteSelectedContact()">Delete Contact</button>
-                </div>
-
-                <div class="welcome-screen" id="right-welcome">Welcome!</div>
-
-                <div class="chat-container" id="right-chat-window" style="display: none;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                        <h3 id="chat-with-heading" style="margin:0;">Chat</h3>
-                        <button onclick="startCall()" style="background:green; color:white; border:none; padding:5px 10px; font-weight:bold; cursor:pointer;">📞 Live Video Call</button>
+                <!-- Right Pane: Open Live Conversation -->
+                <div class="chat-main-pane">
+                    <div id="chat-welcome-screen" style="flex:1; display:flex; justify-content:center; align-items:center; font-size:40px; font-weight:bold; opacity:0.3;">
+                        AirSkype 3.0
                     </div>
-                    <div class="messages-box" id="messages-box"></div>
-                    <div class="chat-input-area">
-                        <input type="text" id="chat-msg-input" placeholder="Type a message...">
-                        <button onclick="sendMessage()">Send</button>
-                    </div>
-                </div>
 
-                <div class="video-box" id="video-window">
-                    <div class="video-streams">
-                        <video id="localVideo" autoplay playsinline muted></video>
-                        <video id="remoteVideo" autoplay playsinline></video>
+                    <div id="chat-active-screen" style="display:none; flex:1; flex-direction:column; height:100%;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h2 id="active-chat-title" style="margin:0;">Chat</h2>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="startVideoCall()" style="background:green; color:white; border:none; padding:8px 14px; font-weight:bold; cursor:pointer;">📞 Call Video</button>
+                                <button onclick="deleteCurrentContact()" style="background:red; color:white; border:none; padding:8px 14px; font-weight:bold; cursor:pointer;"><span class="lang-txt" data-en="Remove" data-pl="Usuń">Usuń</span></button>
+                            </div>
+                        </div>
+                        
+                        <div class="messages-container" id="messages-stream"></div>
+                        
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="message-field" class="skype-input-box" placeholder="Type message...">
+                            <button onclick="transmitMessage()" style="background:var(--main-color); color:white; border:none; padding:0 25px; font-weight:bold; cursor:pointer;">Send</button>
+                        </div>
                     </div>
-                    <button onclick="endCall()" style="background:red; color:white; padding:10px; border:none; font-weight:bold; cursor:pointer;">End Call</button>
+
+                    <!-- Call Video Screen Overlay -->
+                    <div class="video-overlay" id="call-overlay">
+                        <div class="video-windows">
+                            <video id="myCameraView" autoplay playsinline muted></video>
+                            <video id="remoteCameraView" autoplay playsinline></video>
+                        </div>
+                        <button onclick="terminateCall()" style="background:red; color:white; padding:12px; border:none; font-weight:bold; font-size:16px; cursor:pointer;">Hang Up</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="tab-personalize" class="tab-content standard-padding">
-            <h2>Personalization Center</h2>
+        <!-- ================= PERSONALIZE VIEW ================= -->
+        <div id="tab-personalize" class="tab-content">
+            <h2 class="lang-txt" data-en="Personalization Settings" data-pl="Ustawienia Personalizacji">Ustawienia Personalizacji</h2>
             <div class="grid-layout">
+                <!-- Language Module -->
                 <div class="tile-card">
-                    <h3>Visual Mode</h3>
-                    <button onclick="setTheme('light')">Light Mode</button>
-                    <button onclick="setTheme('dark')">Dark Mode</button>
+                    <h3 class="lang-txt" data-en="Application Language" data-pl="Język aplikacji">Język aplikacji</h3>
+                    <select id="lang-selector" onchange="changeLanguage(this.value)">
+                        <option value="pl">Polski (Polish)</option>
+                        <option value="en">English (Angielski)</option>
+                    </select>
                 </div>
+                <!-- Custom Themes -->
                 <div class="tile-card">
-                    <h3>Interface Color</h3>
-                    <button onclick="changeColor('#00a2ed')">Sky Blue</button>
-                    <button onclick="changeColor('#ffcc00')">Yellow</button>
-                    <button onclick="changeColor('#00cc66')">Green</button>
-                    <button onclick="changeColor('#ff3333')">Red</button>
+                    <h3 class="lang-txt" data-en="Interface Color Theme" data-pl="Kolorystyka interfejsu">Kolorystyka interfejsu</h3>
+                    <input type="color" id="color-picker" value="#00a2ed" onchange="applyCustomColor(this.value)">
+                    <span style="font-size:12px; opacity:0.7;" class="lang-txt" data-en="Pick any customized hex color" data-pl="Wybierz dowolny kolor z palety">Wybierz dowolny kolor z palety</span>
                 </div>
+                <!-- Wallpaper Module -->
                 <div class="tile-card" style="grid-column: span 2;">
-                    <h3>Background Wallpaper</h3>
-                    <input type="text" id="bg-url-input" placeholder="Paste Image URL here...">
+                    <h3 class="lang-txt" data-en="Wallpaper (Background Image URL)" data-pl="Tapeta (Adres URL obrazu tła)">Tapeta (Adres URL obrazu tła)</h3>
+                    <input type="text" id="wallpaper-input" class="skype-input-box" placeholder="https://images.com/background.jpg">
                     <div style="display:flex; gap:10px;">
-                        <button onclick="applyWallpaper()" style="flex:1;">Apply</button>
-                        <button onclick="removeWallpaper()">Remove</button>
+                        <button onclick="saveWallpaper()" style="flex:1;" class="lang-txt" data-en="Apply Wallpaper" data-pl="Zastosuj tapetę">Zastosuj tapetę</button>
+                        <button onclick="clearWallpaper()" class="lang-txt" data-en="Clear" data-pl="Usuń">Usuń</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="tab-posts" class="tab-content standard-padding">
-            <h2>AirSkype Community Feed</h2>
+        <!-- ================= POSTS VIEW ================= -->
+        <div id="tab-posts" class="tab-content">
+            <h2>AirSkype Global Feed</h2>
             <div class="grid-layout">
                 <div class="tile-card" style="grid-column: span 2;">
-                    <h3>Create New Post</h3>
-                    <input type="text" id="post-input-text" placeholder="What's on your mind?">
-                    <button onclick="publishPost()">Publish Post</button>
+                    <h3>Create Post</h3>
+                    <input type="text" id="post-text" class="skype-input-box" placeholder="What is happening?">
+                    <button onclick="sendPost()" style="margin-top:5px; padding:6px;">Publish</button>
                 </div>
             </div>
-            <div class="grid-layout" id="posts-feed" style="margin-top:20px;"></div>
+            <div id="posts-container" style="max-width:900px;"></div>
         </div>
 
-        <div id="tab-about" class="tab-content standard-padding">
-            <h2>Your AirSkype Identity</h2>
+        <!-- ================= ABOUT YOU (IDENTITY) VIEW ================= -->
+        <div id="tab-about" class="tab-content">
+            <h2 class="lang-txt" data-en="Profile Identity" data-pl="Tożsamość Profilu">Tożsamość Profilu</h2>
             <div class="grid-layout">
-                <div class="tile-card" id="login-box">
-                    <h3>Sign In</h3>
-                    <input type="text" id="reg-phone" placeholder="Phone Number (Network ID)">
-                    <input type="text" id="reg-nick" placeholder="Nickname">
-                    
-                    <p style="margin:5px 0; font-size:14px; font-weight:bold;">Choose Avatar:</p>
-                    <div class="avatar-picker">
-                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Felix" class="avatar-option selected" onclick="pickAvatar(this, 'Felix')">
-                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Aneka" class="avatar-option" onclick="pickAvatar(this, 'Aneka')">
-                        <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Jack" class="avatar-option" onclick="pickAvatar(this, 'Jack')">
-                    </div>
-                    
-                    <button onclick="loginUser()">Login & Save</button>
+                <div class="tile-card" id="unregistered-form">
+                    <h3 class="lang-txt" data-en="Register Identity" data-pl="Zarejestruj profil">Zarejestruj profil</h3>
+                    <input type="text" id="user-phone" class="skype-input-box" placeholder="Phone Number / Network ID">
+                    <input type="text" id="user-nick" class="skype-input-box" placeholder="Your Nickname">
+                    <button onclick="performLogin()">Save Profile</button>
                 </div>
-
-                <div class="tile-card" id="profile-box" style="display:none; text-align:center; align-items:center;">
-                    <h3>Profile Active</h3>
-                    <img id="prof-img-badge" src="" class="profile-badge">
-                    <h2 id="prof-nick" style="margin:5px 0;">Nick</h2>
-                    <p id="prof-phone" style="margin:0; opacity:0.7;">Number</p>
-                    <button onclick="logoutUser()" style="width:100%;">Logout</button>
+                <div class="tile-card" id="registered-badge" style="display:none; text-align:center;">
+                    <h3 class="lang-txt" data-en="Account Active" data-pl="Profil aktywny">Profil aktywny</h3>
+                    <h2 id="view-nick" style="margin:10px 0 0 0;">-</h2>
+                    <p id="view-phone" style="margin:0 0 15px 0; opacity:0.7;">-</p>
+                    <button onclick="performLogout()" style="background:red; color:white; border:none; padding:5px;">Logout</button>
                 </div>
             </div>
         </div>
@@ -361,152 +340,274 @@
     </div>
 
     <script>
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-' + tab).classList.add('active');
-            document.getElementById(tab + '-btn').className = 'menu-btn active';
+        // --- MULTIMEDIA SOUNDS ENGINE (WEB AUDIO API) ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSoundNotification() {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start(); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.stop(audioCtx.currentTime + 0.15);
         }
 
-        let contacts = JSON.parse(localStorage.getItem('as2_contacts')) || [];
-        let posts = JSON.parse(localStorage.getItem('as2_posts')) || [];
-        let profile = JSON.parse(localStorage.getItem('as2_profile')) || null;
-        let selectedAvatarSeed = 'Felix';
+        let ringInterval;
+        function startRingtone() {
+            ringInterval = setInterval(() => {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                osc.start(); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+                osc.stop(audioCtx.currentTime + 0.4);
+            }, 1000);
+        }
+        function stopRingtone() { clearInterval(ringInterval); }
+
+        // --- CORE DATA ARCHITECTURE ---
+        let contacts = JSON.parse(localStorage.getItem('as3_contacts')) || [];
+        let posts = JSON.parse(localStorage.getItem('as3_posts')) || [];
+        let profile = JSON.parse(localStorage.getItem('as3_profile')) || null;
+        let currentLanguage = localStorage.getItem('as3_lang') || 'pl';
+        let currentThemeColor = localStorage.getItem('as3_color') || '#00a2ed';
         let selectedContact = null;
 
-        let peer, activeConnection = null, activeCall = null, localStream = null;
+        // P2P WebRTC Core
+        let peer, activeConn = null, activeCall = null, cameraStream = null;
 
-        function initPeerNetwork() {
-            const customId = profile ? profile.phone : null;
-            peer = customId ? new Peer(customId) : new Peer();
-            peer.on('open', id => document.getElementById('my-peer-id').innerText = id);
-            peer.on('connection', conn => { activeConnection = conn; setupChatConnection(); });
+        function initializeP2P() {
+            const endpointId = profile ? profile.phone : null;
+            peer = endpointId ? new Peer(endpointId) : new Peer();
+
+            peer.on('open', id => {
+                if(!profile) document.getElementById('name-indicator').innerText = `(ID: ${id})`;
+            });
+            peer.on('connection', conn => {
+                activeConn = conn;
+                setupDataChannels();
+            });
             peer.on('call', call => {
-                navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-                    localStream = stream;
-                    document.getElementById('video-window').style.display = 'flex';
-                    document.getElementById('localVideo').srcObject = stream;
-                    call.answer(stream); activeCall = call;
-                    call.on('stream', rStream => document.getElementById('remoteVideo').srcObject = rStream);
-                });
+                startRingtone();
+                if(confirm("Incoming live video call! Accept?")) {
+                    stopRingtone();
+                    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
+                        cameraStream = stream;
+                        document.getElementById('call-overlay').style.display = 'flex';
+                        document.getElementById('myCameraView').srcObject = stream;
+                        call.answer(stream); activeCall = call;
+                        call.on('stream', rStream => document.getElementById('remoteCameraView').srcObject = rStream);
+                    });
+                } else { stopRingtone(); call.close(); }
             });
         }
 
-        function renderContacts() {
-            const container = document.getElementById('contacts-list-container');
-            if (contacts.length === 0) {
-                container.innerHTML = '<p style="text-align:center; font-size:14px; opacity:0.6; padding-top:20px;">No contacts yet.</p>';
+        // --- NAVIGATION INTERFACE ---
+        function switchTab(targetTab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.skype-action-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + targetTab).classList.add('active');
+            const navBtn = document.getElementById(targetTab + '-nav-btn');
+            if(navBtn) navBtn.classList.add('active');
+        }
+
+        // --- LANGUAGE CORE IMPLEMENTATION ---
+        function changeLanguage(langCode) {
+            currentLanguage = langCode;
+            localStorage.setItem('as3_lang', langCode);
+            document.querySelectorAll('.lang-txt').forEach(el => {
+                el.innerText = el.getAttribute('data-' + langCode);
+            });
+            document.getElementById('lang-selector').value = langCode;
+        }
+
+        // --- VISUAL COLOR PERSONALIZATION ---
+        function applyCustomColor(hex) {
+            currentThemeColor = hex;
+            localStorage.setItem('as3_color', hex);
+            const r = document.documentElement;
+            r.style.setProperty('--main-color', hex);
+            r.style.setProperty('--text-color', hex);
+            document.getElementById('color-picker').value = hex;
+        }
+
+        function saveWallpaper() {
+            const url = document.getElementById('wallpaper-input').value.trim();
+            if(!url) return;
+            document.documentElement.style.setProperty('--bg-image', `url('${url}')`);
+            localStorage.setItem('as3_wallpaper', url);
+        }
+        function clearWallpaper() {
+            document.documentElement.style.setProperty('--bg-image', 'none');
+            document.getElementById('wallpaper-input').value = "";
+            localStorage.removeItem('as3_wallpaper');
+        }
+
+        // --- CONTACT MANAGEMENT ENGINE ---
+        function renderContactsList(filterString = '') {
+            const zone = document.getElementById('contacts-zone');
+            const searchVal = filterString.toLowerCase().trim();
+            const filtered = contacts.filter(c => c.toLowerCase().includes(searchVal));
+
+            if(filtered.length === 0) {
+                zone.innerHTML = '<span style="font-size:12px; opacity:0.5; text-align:center;">Empty</span>';
                 return;
             }
-            container.innerHTML = contacts.map(c => `
-                <button class="contact-item-btn ${selectedContact === c ? 'selected' : ''}" onclick="selectContact('${c}')">
+
+            zone.innerHTML = filtered.map(c => `
+                <button class="skype-action-btn" style="text-align:left; display:flex; justify-content:space-between; align-items:center;" onclick="openChatWith('${c}')">
                     <span>${c}</span>
-                    <span class="contact-avatar"></span>
+                    <span style="width:10px; height:10px; background:green; border-radius:50%;"></span>
                 </button>
             `).join('');
         }
 
-        function selectContact(name) {
-            selectedContact = name; renderContacts();
-            document.getElementById('right-welcome').style.display = 'none';
-            document.getElementById('right-chat-window').style.display = 'flex';
-            document.getElementById('chat-with-heading').innerText = "Chatting with: " + name;
-            document.getElementById('messages-box').innerHTML = "";
-            if(peer) { activeConnection = peer.connect(name); setupChatConnection(); }
+        function filterContacts() {
+            const val = document.getElementById('search-input').value;
+            renderContactsList(val);
         }
 
-        function openAddContactForm() {
-            const name = prompt("Enter contact name/ID:");
-            if(name) { contacts.push(name); localStorage.setItem('as2_contacts', JSON.stringify(contacts)); renderContacts(); }
+        function openAddContact() {
+            const name = prompt(currentLanguage === 'pl' ? "Wpisz ID/Numer kontaktu:" : "Enter Contact ID/Phone:");
+            if(name) {
+                contacts.push(name);
+                localStorage.setItem('as3_contacts', JSON.stringify(contacts));
+                renderContactsList();
+            }
         }
 
-        function deleteSelectedContact() {
-            if(!selectedContact) return alert("Select a contact first!");
+        function openChatWith(name) {
+            selectedContact = name;
+            document.getElementById('chat-welcome-screen').style.display = 'none';
+            document.getElementById('chat-active-screen').style.display = 'flex';
+            document.getElementById('active-chat-title').innerText = name;
+            document.getElementById('messages-stream').innerHTML = '';
+            
+            if(peer) {
+                activeConn = peer.connect(name);
+                setupDataChannels();
+            }
+        }
+
+        function deleteCurrentContact() {
             contacts = contacts.filter(c => c !== selectedContact);
-            localStorage.setItem('as2_contacts', JSON.stringify(contacts));
-            selectedContact = null; renderContacts();
-            document.getElementById('right-welcome').style.display = 'flex';
-            document.getElementById('right-chat-window').style.display = 'none';
+            localStorage.setItem('as3_contacts', JSON.stringify(contacts));
+            selectedContact = null;
+            renderContactsList();
+            document.getElementById('chat-welcome-screen').style.display = 'flex';
+            document.getElementById('chat-active-screen').style.display = 'none';
         }
 
-        function setupChatConnection() { activeConnection.on('data', data => appendMessage(data.text, 'remote')); }
-        function sendMessage() {
-            const input = document.getElementById('chat-msg-input'); const txt = input.value.trim();
-            if(!txt || !activeConnection) return;
-            activeConnection.send({ text: txt }); appendMessage(txt, 'my'); input.value = "";
-        }
-        function appendMessage(text, sender) {
-            const box = document.getElementById('messages-box'); box.innerHTML += `<div class="msg ${sender}">${text}</div>`;
-            box.scrollTop = box.scrollHeight;
+        // --- DATA COMMUNICATIONS (CHAT) ---
+        function setupDataChannels() {
+            activeConn.on('data', data => {
+                appendChatMessage(data.payload, 'remote');
+                playSoundNotification();
+            });
         }
 
-        function startCall() {
+        function transmitMessage() {
+            const field = document.getElementById('message-field');
+            const text = field.value.trim();
+            if(!text || !activeConn) return;
+
+            activeConn.send({ payload: text });
+            appendChatMessage(text, 'my');
+            playSoundNotification();
+            field.value = '';
+        }
+
+        function appendChatMessage(txt, emitter) {
+            const stream = document.getElementById('messages-stream');
+            stream.innerHTML += `<div class="msg-bubble ${emitter}">${txt}</div>`;
+            stream.scrollTop = stream.scrollHeight;
+        }
+
+        // --- REALTIME VIDEO ENGINE ---
+        function startVideoCall() {
             if(!selectedContact) return;
+            startRingtone();
             navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-                localStream = stream; document.getElementById('video-window').style.display = 'flex';
-                document.getElementById('localVideo').srcObject = stream;
-                const call = peer.call(selectedContact, stream); activeCall = call;
-                call.on('stream', rStream => document.getElementById('remoteVideo').srcObject = rStream);
-            }).catch(err => alert("Camera blocked: " + err));
+                stopRingtone();
+                cameraStream = stream;
+                document.getElementById('call-overlay').style.display = 'flex';
+                document.getElementById('myCameraView').srcObject = stream;
+                
+                const call = peer.call(selectedContact, stream);
+                activeCall = call;
+                call.on('stream', rStream => document.getElementById('remoteCameraView').srcObject = rStream);
+            }).catch(err => { stopRingtone(); alert("Camera capture failed: " + err); });
         }
-        function endCall() { if(activeCall) activeCall.close(); if(localStream) localStream.getTracks().forEach(t => t.stop()); document.getElementById('video-window').style.display = 'none'; }
 
-        function publishPost() {
-            const input = document.getElementById('post-input-text'); const txt = input.value.trim(); if(!txt) return;
-            const author = profile ? profile.nick : "Anonymous";
-            const av = profile ? profile.avatar : "https://api.dicebear.com/7.x/bottts/svg?seed=Anon";
-            posts.unshift({ author, text: txt, avatar: av }); localStorage.setItem('as2_posts', JSON.stringify(posts));
-            input.value = ""; renderPosts();
+        function terminateCall() {
+            stopRingtone();
+            if(activeCall) activeCall.close();
+            if(cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+            document.getElementById('call-overlay').style.display = 'none';
         }
-        function renderPosts() {
-            const feed = document.getElementById('posts-feed');
-            if(posts.length === 0) { feed.innerHTML = '<p style="opacity:0.6;">No posts yet.</p>'; return; }
-            feed.innerHTML = posts.map(p => `
-                <div class="tile-card" style="flex-direction:row; align-items:center; gap:15px;">
-                    <img src="${p.avatar}" style="width:50px; height:50px; border-radius:50%; background:white;">
+
+        // --- BLOGS & POSTS MODULE ---
+        function sendPost() {
+            const inp = document.getElementById('post-text');
+            const txt = inp.value.trim(); if(!txt) return;
+            const author = profile ? profile.nick : 'Anonymous';
+            posts.unshift({ sender: author, content: txt });
+            localStorage.setItem('as3_posts', JSON.stringify(posts));
+            inp.value = ''; renderPostsFeed();
+        }
+        function renderPostsFeed() {
+            const container = document.getElementById('posts-container');
+            if(posts.length === 0) { container.innerHTML = '<p style="opacity:0.5;">No posts feed available.</p>'; return; }
+            container.innerHTML = posts.map(p => `
+                <div class="post-item">
+                    <div class="profile-top-avatar"></div>
                     <div>
-                        <b style="font-size:18px;">${p.author}</b>
-                        <p style="margin:5px 0 0 0; color:#333;">${p.text}</p>
+                        <b style="font-size:16px;">${p.sender}</b>
+                        <p style="margin:4px 0 0 0; color:#444;">${p.content}</p>
                     </div>
                 </div>
             `).join('');
         }
 
-        function pickAvatar(element, seed) {
-            document.querySelectorAll('.avatar-option').forEach(img => img.classList.remove('selected'));
-            element.classList.add('selected'); selectedAvatarSeed = seed;
+        // --- IDENTITY HANDLING ---
+        function performLogin() {
+            const phone = document.getElementById('user-phone').value.trim();
+            const nick = document.getElementById('user-nick').value.trim();
+            if(!phone || !nick) return alert("Complete the fields!");
+            profile = { phone, nick }; localStorage.setItem('as3_profile', JSON.stringify(profile));
+            syncIdentityUI(); initializeP2P();
+        }
+        function performLogout() {
+            localStorage.removeItem('as3_profile'); profile = null;
+            syncIdentityUI(); if(peer) peer.destroy(); initializeP2P();
+        }
+        function syncIdentityUI() {
+            if(profile) {
+                document.getElementById('unregistered-form').style.display = 'none';
+                document.getElementById('registered-badge').style.display = 'flex';
+                document.getElementById('view-nick').innerText = profile.nick;
+                document.getElementById('view-phone').innerText = "ID: " + profile.phone;
+                document.getElementById('name-indicator').innerText = profile.nick;
+            } else {
+                document.getElementById('unregistered-form').style.display = 'flex';
+                document.getElementById('registered-badge').style.display = 'none';
+                document.getElementById('name-indicator').innerText = "(Nazwa)";
+            }
         }
 
-        function loginUser() {
-            const phone = document.getElementById('reg-phone').value.trim();
-            const nick = document.getElementById('reg-nick').value.trim();
-            if(!phone || !nick) return alert("Fill out fields!");
-            const avatar = `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedAvatarSeed}`;
-            profile = { phone, nick, avatar }; localStorage.setItem('as2_profile', JSON.stringify(profile));
-            renderProfile(); initPeerNetwork();
-        }
-        function logoutUser() { localStorage.removeItem('as2_profile'); profile = null; renderProfile(); if(peer) peer.destroy(); initPeerNetwork(); }
-        function renderProfile() {
-            const lBox = document.getElementById('login-box'); const pBox = document.getElementById('profile-box');
-            if(profile) { lBox.style.display = 'none'; pBox.style.display = 'flex'; document.getElementById('prof-img-badge').src = profile.avatar; document.getElementById('prof-nick').innerText = profile.nick; document.getElementById('prof-phone').innerText = "ID: " + profile.phone; }
-            else { lBox.style.display = 'flex'; pBox.style.display = 'none'; }
+        // --- CONFIGURATION SETUP ---
+        changeLanguage(currentLanguage);
+        applyCustomColor(currentThemeColor);
+        const activeWall = localStorage.getItem('as3_wallpaper');
+        if(activeWall) {
+            document.documentElement.style.setProperty('--bg-image', `url('${activeWall}')`);
+            document.getElementById('wallpaper-input').value = activeWall;
         }
 
-        function setTheme(mode) {
-            const r = document.documentElement;
-            if(mode === 'dark') { r.style.setProperty('--bg-color', '#090d16'); r.style.setProperty('--box-bg', 'rgba(17, 24, 39, 0.85)'); localStorage.setItem('as2_theme', 'dark'); }
-            else { r.style.setProperty('--bg-color', '#ffffff'); r.style.setProperty('--box-bg', 'rgba(255, 255, 255, 0.85)'); localStorage.setItem('as2_theme', 'light'); }
-        }
-        function changeColor(hex) { document.documentElement.style.setProperty('--main-color', hex); document.documentElement.style.setProperty('--text-color', hex); localStorage.setItem('as2_color', hex); }
-        function applyWallpaper() { const url = document.getElementById('bg-url-input').value.trim(); if(!url) return; document.documentElement.style.setProperty('--bg-image', `url('${url}')`); localStorage.setItem('as2_wallpaper', url); }
-        function removeWallpaper() { document.documentElement.style.setProperty('--bg-image', 'none'); document.getElementById('bg-url-input').value = ""; localStorage.removeItem('as2_wallpaper'); }
-
-        setTheme(localStorage.getItem('as2_theme') || 'light');
-        changeColor(localStorage.getItem('as2_color') || '#00a2ed');
-        const sWall = localStorage.getItem('as2_wallpaper'); if(sWall) { document.documentElement.style.setProperty('--bg-image', `url('${sWall}')`); document.getElementById('bg-url-input').value = sWall; }
-
-        document.getElementById('chat-msg-input').addEventListener('keypress', e => { if(e.key === 'Enter') sendMessage(); });
-        renderContacts(); renderProfile(); renderPosts(); initPeerNetwork();
+        document.getElementById('message-field').addEventListener('keypress', e => { if(e.key === 'Enter') transmitMessage(); });
+        renderContactsList(); syncIdentityUI(); renderPostsFeed(); initializeP2P();
     </script>
 </body>
 </html>
