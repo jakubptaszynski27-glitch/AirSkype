@@ -1,20 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AirSkype 3.0</title>
-    <!-- PeerJS for WebRTC Connections -->
+    <title>AirSkype Alpha - Stable Edition</title>
+    <!-- PeerJS do bezpośrednich połączeń P2P (zabezpieczone przed błędami sieci) -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --main-color: #00a2ed;
-            --bg-color: #ffffff;
-            --text-color: #00a2ed;
             --button-text: #ffffff;
-            --box-bg: #ffffff;
+            
+            /* Domyślny, głęboki i solidny Dark Mode */
+            --bg-color: #0c1117;
+            --panel-bg: #161b22;
+            --border-color: #30363d;
+            --text-color: #f0f6fc;
+            --text-secondary: #8b949e;
+            --input-bg: #0d1117;
+            --bubble-remote: #21262d;
+            --msg-text-remote: #f0f6fc;
+            
+            --font-size-base: 15px;
             --bg-image: none;
         }
+
+        body.light-theme {
+            --bg-color: #f4f7f9;
+            --panel-bg: #ffffff;
+            --border-color: #d0d7de;
+            --text-color: #24292f;
+            --text-secondary: #57606a;
+            --input-bg: #f6f8fa;
+            --bubble-remote: #f3f4f6;
+            --msg-text-remote: #24292f;
+        }
+
+        /* OPCJE OPTYMALIZACJI SYSTEMÓW (OS MATRIX) */
+        body[data-os="win7"] { font-family: 'Tahoma', sans-serif; }
+        body[data-os="win8"] { text-transform: uppercase; }
+        body[data-os="win10"] { letter-spacing: -0.2px; }
+        body[data-os="win11"] { font-family: 'Segoe UI', sans-serif; }
+        body[data-os="macbook"], body[data-os="imac"] { font-family: '-apple-system', BlinkMacSystemFont, sans-serif; }
 
         body {
             background-color: var(--bg-color);
@@ -23,88 +50,113 @@
             background-position: center;
             background-attachment: fixed;
             color: var(--text-color);
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: var(--font-size-base);
             margin: 0;
             padding: 0;
             display: flex;
             height: 100vh;
             overflow: hidden;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
 
-        /* SIDEBAR STRUCTURE FROM "Bez tytułu.png" */
+        /* CAŁKOWITY BRAK ZAOKRĄGLEŃ - KLASYCZNE OSTRE KRAWĘDZIE */
+        * {
+            border-radius: 0px !important;
+        }
+
+        /* KOLUMNA 1: SIDEBAR (Zgodnie ze szkicem Bez tytułu.png) */
         .sidebar {
-            width: 260px;
-            padding: 15px;
+            width: 290px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
             box-sizing: border-box;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-right: 2px solid var(--main-color);
+            background: var(--panel-bg);
+            border-right: 2px solid var(--border-color);
             z-index: 10;
         }
 
-        /* Profile Block on Top */
         .profile-top-block {
-            border: 3px solid var(--main-color);
-            padding: 8px;
+            border: 2px solid var(--main-color);
+            padding: 12px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
             cursor: pointer;
-            font-weight: bold;
-            font-size: 18px;
-            background: var(--box-bg);
+            font-weight: 700;
+            background: var(--input-bg);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        .profile-top-block:hover {
+            transform: translateX(4px);
+            background: var(--border-color);
         }
         .profile-top-avatar {
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
+            width: 32px;
+            height: 32px;
             border: 2px solid var(--main-color);
             background: #fff;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
         }
 
-        /* Action elements styled strictly like the blue outlines in the sketch */
         .skype-input-box {
-            border: 3px solid var(--main-color);
-            background: var(--box-bg);
-            padding: 6px;
-            font-size: 16px;
-            font-weight: bold;
+            border: 2px solid var(--border-color);
+            background: var(--input-bg);
+            padding: 10px 14px;
+            font-size: 1em;
+            font-weight: 600;
             color: var(--text-color);
             width: 100%;
             box-sizing: border-box;
+            outline: none;
         }
-        .skype-input-box::placeholder { color: var(--main-color); opacity: 0.6; }
+        .skype-input-box:focus {
+            border-color: var(--main-color);
+        }
 
         .skype-action-btn {
-            border: 3px solid var(--main-color);
-            background: var(--box-bg);
+            border: 2px solid var(--border-color);
+            background: var(--panel-bg);
             color: var(--text-color);
-            font-size: 18px;
-            font-weight: bold;
-            padding: 8px;
+            font-size: 1em;
+            font-weight: 700;
+            padding: 12px 16px;
             text-align: left;
             cursor: pointer;
             width: 100%;
             box-sizing: border-box;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-        .skype-action-btn:hover, .skype-action-btn.active {
-            background-color: var(--main-color);
+        .skype-action-btn:hover {
+            background: var(--border-color);
+            transform: translateX(4px);
+        }
+        .skype-action-btn.active {
+            background: var(--main-color);
             color: var(--button-text);
+            border-color: var(--main-color);
         }
 
-        /* App Footer Signature from sketch */
         .sidebar-footer {
             margin-top: auto;
-            font-weight: bold;
-            font-size: 20px;
-            line-height: 1.2;
+            font-weight: 900;
+            font-size: 1.6em;
+            color: var(--main-color);
+            text-transform: uppercase;
+            letter-spacing: -1px;
         }
 
-        /* MAIN CONTENT AREA */
+        /* PANORAMA GŁÓWNA */
         .main-area {
             flex: 1;
             display: flex;
@@ -118,221 +170,433 @@
             height: 100%;
             display: none;
             box-sizing: border-box;
-            padding: 25px;
+            padding: 30px;
             overflow-y: auto;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
         }
-        .tab-content.active { display: flex; flex-direction: column; }
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-        /* CONTACT LIST & CHAT SPLIT */
+        /* UKŁAD STRUKTURY ROZMÓW */
         .chats-split-view {
             display: flex;
             width: 100%;
             height: 100%;
-            margin: -25px; /* Reset padding */
+            margin: -30px;
         }
 
+        /* ŚRODKOWY PANEL: KONTAKTY I PRZECIĄGANIE */
         .contacts-list-pane {
-            width: 250px;
-            border-right: 2px solid var(--main-color);
-            padding: 15px;
+            width: 280px;
+            border-right: 2px solid var(--border-color);
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 15px;
             overflow-y: auto;
+            background: var(--panel-bg);
         }
 
+        .drag-zone-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--main-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* STREFY UPUSZCZANIA (DROPZONES) */
+        .dropzone {
+            border: 2px dashed rgba(0, 162, 237, 0.2);
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.01);
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        .dropzone.dragover {
+            border-color: var(--main-color);
+            background: rgba(0, 162, 237, 0.05);
+        }
+
+        /* DYNAMICZNY ELEMENT KONTAKTU (DRAGGABLE) */
+        .draggable-contact {
+            cursor: grab;
+            user-select: none;
+            border: 2px solid var(--border-color);
+            background: var(--input-bg);
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            transition: transform 0.15s, border-color 0.15s;
+        }
+        .draggable-contact:active {
+            cursor: grabbing;
+            transform: scale(0.98);
+        }
+        .draggable-contact.selected {
+            border-color: var(--main-color);
+            background: var(--border-color);
+        }
+
+        /* PRAWA STRONA: CZAT */
         .chat-main-pane {
             flex: 1;
-            padding: 20px;
+            padding: 30px;
             display: flex;
             flex-direction: column;
             position: relative;
         }
 
-        /* CHAT BUBBLES */
         .messages-container {
             flex: 1;
-            border: 3px solid var(--main-color);
-            background: rgba(255, 255, 255, 0.85);
-            padding: 15px;
-            margin: 15px 0;
+            border: 2px solid var(--border-color);
+            background: var(--panel-bg);
+            padding: 20px;
+            margin: 20px 0;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
         }
-        .msg-bubble { padding: 8px 14px; border-radius: 6px; max-width: 65%; font-weight: bold; }
-        .msg-bubble.my { background: var(--main-color); color: var(--button-text); align-self: flex-end; }
-        .msg-bubble.remote { background: #e5e5e5; color: #333; align-self: flex-start; }
+        .msg-bubble {
+            padding: 12px 18px;
+            max-width: 65%;
+            font-weight: 600;
+            line-height: 1.4;
+            animation: solidPopIn 0.2s ease forwards;
+        }
+        .msg-bubble img, .msg-bubble video {
+            max-width: 100%;
+            max-height: 240px;
+            display: block;
+            margin-top: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .msg-bubble.my {
+            background: var(--main-color);
+            color: var(--button-text);
+            align-self: flex-end;
+            border-right: 4px solid #ffffff;
+        }
+        .msg-bubble.remote {
+            background: var(--bubble-remote);
+            color: var(--msg-text-remote);
+            align-self: flex-start;
+            border-left: 4px solid var(--main-color);
+        }
 
-        /* GRID FOR TILE CARDS */
+        /* SIATKA PERSONALIZACJI */
         .grid-layout {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 20px;
-            margin-top: 15px;
+            margin-top: 20px;
             width: 100%;
             max-width: 900px;
         }
         .tile-card {
-            border: 3px solid var(--main-color);
-            background: var(--box-bg);
-            padding: 15px;
+            border: 2px solid var(--border-color);
+            background: var(--panel-bg);
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
+            transition: border-color 0.2s;
         }
-        .tile-card h3 { margin: 0; font-size: 18px; }
-
-        /* VIDEO STREAM LAYER */
-        .video-overlay {
-            display: none;
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 20; flex-direction: column;
+        .tile-card:hover {
+            border-color: var(--main-color);
         }
-        .video-windows { flex: 1; display: flex; gap: 10px; padding: 15px; }
-        video { flex: 1; border: 3px solid var(--main-color); background: #111; border-radius: 6px; }
+        .tile-card h3 { margin: 0; font-size: 1.2em; font-weight: 700; }
 
-        /* RECENT POSTS STYLE */
+        /* POSTY I AKTYWNE CZYNNOŚCI */
         .post-item {
-            border: 3px solid var(--main-color);
-            background: var(--box-bg);
-            padding: 15px;
-            margin-top: 10px;
+            border: 2px solid var(--border-color);
+            background: var(--panel-bg);
+            padding: 20px;
+            margin-top: 16px;
             display: flex;
-            gap: 15px;
-            align-items: center;
+            flex-direction: column;
+            gap: 12px;
+            animation: solidPopIn 0.3s ease forwards;
+        }
+        .post-header { display: flex; gap: 12px; align-items: center; }
+        .post-media-container img { max-width: 100%; max-height: 350px; object-fit: cover; border: 1px solid var(--border-color); margin-top: 8px; }
+        .post-media-container video { width: 100%; max-height: 350px; background: #000; border: 1px solid var(--border-color); margin-top: 8px; }
+        
+        .post-actions-bar { display: flex; gap: 15px; margin-top: 5px; }
+        .action-count-btn { background: transparent !important; color: var(--text-secondary); font-weight: 700; cursor: pointer; border: none; padding: 4px 8px !important; }
+        .action-count-btn.active-voted { color: var(--main-color) !important; text-decoration: underline; }
+        .action-count-btn:hover { color: var(--main-color); }
+
+        .comments-section { border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+        .comment-item { background: var(--input-bg); padding: 8px 12px; font-size: 0.9em; border-left: 3px solid var(--main-color); }
+
+        /* PRESETY TAPET */
+        .preset-bg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .preset-category-title { font-size: 14px; font-weight: 800; color: var(--main-color); margin-top: 5px; margin-bottom: 2px; text-transform: uppercase; }
+        .preset-bg-btn { padding: 10px; text-align: center; border: 1px solid var(--border-color); cursor: pointer; font-weight: bold; background: var(--input-bg); font-size: 13px; transition: all 0.2s ease; }
+        .preset-bg-btn:hover, .preset-bg-btn.active-os, .preset-bg-btn.active-lang { border-color: var(--main-color); background: var(--border-color); }
+
+        button:not(.skype-action-btn):not(.action-count-btn):not(.preset-bg-btn) {
+            background: var(--main-color);
+            color: var(--button-text);
+            border: none;
+            padding: 12px 24px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.15s ease, filter 0.15s ease;
+        }
+        button:not(.skype-action-btn):not(.action-count-btn):not(.preset-bg-btn):hover {
+            filter: brightness(1.1);
+        }
+
+        .status-dot { width: 12px; height: 12px; background: #2ecc71; }
+
+        @keyframes solidPopIn {
+            0% { opacity: 0; transform: translateY(8px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body>
+<body class="dark-theme" data-os="win11">
 
-    <!-- COLUMN 1: SIDEBAR (Strictly based on Bez tytułu.png layout) -->
-    <div class="sidebar">
-        <!-- Top Profile Row -->
-        <div class="profile-top-block" onclick="switchTab('about')" id="profile-trigger">
-            <div class="profile-top-avatar" id="avatar-indicator"></div>
+    <!-- KOLUMNA 1: SIDEBAR (Skype 3.0 Layout) -->
+    <div class="sidebar" id="app-sidebar">
+        <div class="profile-top-block" onclick="switchTab('about')">
+            <div class="profile-top-avatar" id="sidebar-avatar-target">🤖</div>
             <span id="name-indicator">(Nazwa)</span>
         </div>
 
-        <!-- Live Search Field -->
-        <input type="text" class="skype-input-box" id="search-input" placeholder="Wyszukaj / Search..." oninput="filterContacts()">
+        <input type="text" class="skype-input-box" id="search-input" data-i18n-placeholder="search_placeholder" placeholder="Wyszukaj..." oninput="filterContacts()">
 
-        <!-- Quick Actions & Tabs -->
-        <button class="skype-action-btn" onclick="openAddContact()"><span class="lang-txt" data-en="Add Contact" data-pl="Dodaj Kontakt">Dodaj Kontakt</span></button>
-        <button class="skype-action-btn active" id="chats-nav-btn" onclick="switchTab('chats')"><span class="lang-txt" data-en="Chats" data-pl="Rozmowy">Rozmowy</span></button>
-        <button class="skype-action-btn" id="personalize-nav-btn" onclick="switchTab('personalize')"><span class="lang-txt" data-en="Personalize" data-pl="Personalizuj">Personalizuj</span></button>
-        <button class="skype-action-btn" id="posts-nav-btn" onclick="switchTab('posts')">Posts</button>
+        <button class="skype-action-btn" onclick="openAddContact()"><span data-i18n="add_contact">Dodaj Kontakt</span></button>
+        <button class="skype-action-btn active" id="chats-nav-btn" onclick="switchTab('chats')"><span data-i18n="nav_chats">Rozmowy</span></button>
+        <button class="skype-action-btn" id="personalize-nav-btn" onclick="switchTab('personalize')"><span data-i18n="nav_personalize">Personalizuj</span></button>
+        <button class="skype-action-btn" id="posts-nav-btn" onclick="switchTab('posts')"><span data-i18n="nav_posts">Posts Feed</span></button>
 
-        <!-- Brand Footer Sign from sketch -->
-        <div class="sidebar-footer">
-            AirSkype<br>Version 3.0
-        </div>
+        <div class="sidebar-footer">AirSkype Alpha</div>
     </div>
 
-    <!-- MAIN VIEW AREA -->
+    <!-- PANEL ROBOCZY -->
     <div class="main-area">
 
         <!-- ================= CHATS VIEW ================= -->
         <div id="tab-chats" class="tab-content active">
             <div class="chats-split-view">
-                <!-- Middle Pane: Filtered Contacts list -->
-                <div class="contacts-list-pane" id="contacts-zone"></div>
+                
+                <!-- ŚRODKOWY PANEL: KONTAKTY Z DRAG & DROP -->
+                <div class="contacts-list-pane">
+                    
+                    <!-- KATEGORIA: ULUBIONE -->
+                    <div class="drag-zone-title" data-i18n="favorites_section">// Ulubione //</div>
+                    <div class="dropzone" id="favorites-zone" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'favorites')">
+                        <!-- Tu wpadną ulubione -->
+                    </div>
 
-                <!-- Right Pane: Open Live Conversation -->
+                    <!-- KATEGORIA: WSZYSTKIE -->
+                    <div class="drag-zone-title" data-i18n="all_contacts_section">// Wszystkie Kontakty //</div>
+                    <div class="dropzone" id="contacts-zone" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, 'all')">
+                        <!-- Tu wpadną wszystkie regularne -->
+                    </div>
+
+                </div>
+
+                <!-- PRAWA STRONA: CZAT -->
                 <div class="chat-main-pane">
-                    <div id="chat-welcome-screen" style="flex:1; display:flex; justify-content:center; align-items:center; font-size:40px; font-weight:bold; opacity:0.3;">
-                        AirSkype 3.0
+                    <div id="chat-welcome-screen" style="flex:1; display:flex; justify-content:center; align-items:center; font-size:3em; font-weight:900; opacity:0.1; color:var(--main-color);">
+                        AirSkype Alpha
                     </div>
 
                     <div id="chat-active-screen" style="display:none; flex:1; flex-direction:column; height:100%;">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <h2 id="active-chat-title" style="margin:0;">Chat</h2>
-                            <div style="display:flex; gap:10px;">
-                                <button onclick="startVideoCall()" style="background:green; color:white; border:none; padding:8px 14px; font-weight:bold; cursor:pointer;">📞 Call Video</button>
-                                <button onclick="deleteCurrentContact()" style="background:red; color:white; border:none; padding:8px 14px; font-weight:bold; cursor:pointer;"><span class="lang-txt" data-en="Remove" data-pl="Usuń">Usuń</span></button>
-                            </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">
+                            <h2 id="active-chat-title" style="margin:0; font-weight:900;">Chat</h2>
+                            <button onclick="deleteCurrentContact()" style="background:#e74c3c;" data-i18n="delete_contact">Usuń kontakt</button>
                         </div>
                         
                         <div class="messages-container" id="messages-stream"></div>
                         
-                        <div style="display:flex; gap:10px;">
-                            <input type="text" id="message-field" class="skype-input-box" placeholder="Type message...">
-                            <button onclick="transmitMessage()" style="background:var(--main-color); color:white; border:none; padding:0 25px; font-weight:bold; cursor:pointer;">Send</button>
+                        <!-- MULTIMEDIA INPUTS -->
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                                <input type="text" id="chat-media-image" class="skype-input-box" style="font-size:12px; padding:6px;" data-i18n-placeholder="media_img_placeholder" placeholder="Załącz obraz URL (.jpg, .png)">
+                                <input type="text" id="chat-media-video" class="skype-input-box" style="font-size:12px; padding:6px;" data-i18n-placeholder="media_vid_placeholder" placeholder="Załącz wideo URL (.mp4)">
+                            </div>
+                            <div style="display:flex; gap:12px;">
+                                <input type="text" id="message-field" class="skype-input-box" data-i18n-placeholder="type_msg_placeholder" placeholder="Wpisz wiadomość...">
+                                <button onclick="transmitMessage()" data-i18n="send_btn">Wyślij</button>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Call Video Screen Overlay -->
-                    <div class="video-overlay" id="call-overlay">
-                        <div class="video-windows">
-                            <video id="myCameraView" autoplay playsinline muted></video>
-                            <video id="remoteCameraView" autoplay playsinline></video>
-                        </div>
-                        <button onclick="terminateCall()" style="background:red; color:white; padding:12px; border:none; font-weight:bold; font-size:16px; cursor:pointer;">Hang Up</button>
                     </div>
                 </div>
+
             </div>
         </div>
 
         <!-- ================= PERSONALIZE VIEW ================= -->
         <div id="tab-personalize" class="tab-content">
-            <h2 class="lang-txt" data-en="Personalization Settings" data-pl="Ustawienia Personalizacji">Ustawienia Personalizacji</h2>
+            <h2 style="font-weight:900;" data-i18n="personalize_title">Centrum Personalizacji</h2>
             <div class="grid-layout">
-                <!-- Language Module -->
-                <div class="tile-card">
-                    <h3 class="lang-txt" data-en="Application Language" data-pl="Język aplikacji">Język aplikacji</h3>
-                    <select id="lang-selector" onchange="changeLanguage(this.value)">
-                        <option value="pl">Polski (Polish)</option>
-                        <option value="en">English (Angielski)</option>
-                    </select>
-                </div>
-                <!-- Custom Themes -->
-                <div class="tile-card">
-                    <h3 class="lang-txt" data-en="Interface Color Theme" data-pl="Kolorystyka interfejsu">Kolorystyka interfejsu</h3>
-                    <input type="color" id="color-picker" value="#00a2ed" onchange="applyCustomColor(this.value)">
-                    <span style="font-size:12px; opacity:0.7;" class="lang-txt" data-en="Pick any customized hex color" data-pl="Wybierz dowolny kolor z palety">Wybierz dowolny kolor z palety</span>
-                </div>
-                <!-- Wallpaper Module -->
+                
+                <!-- JĘZYKI -->
                 <div class="tile-card" style="grid-column: span 2;">
-                    <h3 class="lang-txt" data-en="Wallpaper (Background Image URL)" data-pl="Tapeta (Adres URL obrazu tła)">Tapeta (Adres URL obrazu tła)</h3>
-                    <input type="text" id="wallpaper-input" class="skype-input-box" placeholder="https://images.com/background.jpg">
-                    <div style="display:flex; gap:10px;">
-                        <button onclick="saveWallpaper()" style="flex:1;" class="lang-txt" data-en="Apply Wallpaper" data-pl="Zastosuj tapetę">Zastosuj tapetę</button>
-                        <button onclick="clearWallpaper()" class="lang-txt" data-en="Clear" data-pl="Usuń">Usuń</button>
+                    <h3 data-i18n="lang_matrix_title">Globalna Lokalizacja Językowa</h3>
+                    <p style="margin:0; font-size:13px; opacity:0.7;" data-i18n="lang_matrix_desc">Wybierz dowolny język świata (w tym języki regionalne i mniejszościowe):</p>
+                    <div class="preset-bg-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="preset-bg-btn" id="lang-pl" onclick="changeLanguage('pl')">Polski</div>
+                        <div class="preset-bg-btn" id="lang-en" onclick="changeLanguage('en')">English</div>
+                        <div class="preset-bg-btn" id="lang-ca" onclick="changeLanguage('ca')">Català (Kataloński)</div>
+                        <div class="preset-bg-btn" id="lang-gd" onclick="changeLanguage('gd')">Gàidhlig (Gaelicki szkocki)</div>
+                        <div class="preset-bg-btn" id="lang-sco" onclick="changeLanguage('sco')">Scots (Szkocki lallans)</div>
+                        <div class="preset-bg-btn" id="lang-es" onclick="changeLanguage('es')">Español</div>
+                        <div class="preset-bg-btn" id="lang-de" onclick="changeLanguage('de')">Deutsch</div>
                     </div>
                 </div>
+
+                <!-- OS OPTIMIZATION -->
+                <div class="tile-card" style="grid-column: span 2;">
+                    <h3 data-i18n="os_matrix_title">Optymalizacja Środowiska (OS Matrix)</h3>
+                    <p style="margin:0; font-size:13px; opacity:0.7;" data-i18n="os_matrix_desc">Wybierz swój system operacyjny, aby dostosować fizykę klatek animacji i optymalizację silnika renderującego:</p>
+                    <div class="preset-category-title">Microsoft Windows</div>
+                    <div class="preset-bg-grid">
+                        <div class="preset-bg-btn" id="os-win7" onclick="applyOSOptimization('win7')">Windows 7</div>
+                        <div class="preset-bg-btn" id="os-win8" onclick="applyOSOptimization('win8')">Windows 8</div>
+                        <div class="preset-bg-btn" id="os-win10" onclick="applyOSOptimization('win10')">Windows 10</div>
+                        <div class="preset-bg-btn" id="os-win11" onclick="applyOSOptimization('win11')">Windows 11</div>
+                    </div>
+                    <div class="preset-category-title">Apple macOS</div>
+                    <div class="preset-bg-grid">
+                        <div class="preset-bg-btn" id="os-macbook" onclick="applyOSOptimization('macbook')">MacBook Pro / Air</div>
+                        <div class="preset-bg-btn" id="os-imac" onclick="applyOSOptimization('imac')">iMac / Mac Studio</div>
+                    </div>
+                </div>
+
+                <div class="tile-card">
+                    <h3 data-i18n="theme_mode_title">Tryb Wizualny (Theme)</h3>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="setTheme('dark')" style="flex:1; background:#21262d; border:1px solid #30363d;">Dark</button>
+                        <button onclick="setTheme('light')" style="flex:1; background:#ffffff; color:#24292f; border:1px solid #d0d7de;">Light</button>
+                    </div>
+                </div>
+
+                <div class="tile-card">
+                    <h3 data-i18n="accent_color_title">Główny Kolor Akcentu</h3>
+                    <input type="color" id="color-picker" value="#00a2ed" onchange="applyCustomColor(this.value)" style="width:100%; height:40px; border:none; cursor:pointer; background:transparent;">
+                </div>
+
+                <!-- WALLPAPERS -->
+                <div class="tile-card" style="grid-column: span 2;">
+                    <h3 data-i18n="wallpaper_library_title">Wybór Tła Pulpitu (Wallpaper Library)</h3>
+                    <div class="preset-category-title">🏙️ <span data-i18n="cat_city">Miasto</span></div>
+                    <div class="preset-bg-grid">
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('city_neon')" data-i18n="wp_tokyo">Cyber Neon Tokio</div>
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('city_dark')" data-i18n="wp_metropolis">Nocna Metropolia</div>
+                    </div>
+                    <div class="preset-category-title">⛰️ <span data-i18n="cat_mountains">Góry</span></div>
+                    <div class="preset-bg-grid">
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('mount_snow')" data-i18n="wp_peaks">Śnieżne Szczyty</div>
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('mount_sunset')" data-i18n="wp_alpine">Alpejski Zmierzch</div>
+                    </div>
+                    <div class="preset-category-title">🌌 <span data-i18n="cat_sky">Niebo</span></div>
+                    <div class="preset-bg-grid">
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('sky_stars')" data-i18n="wp_milky">Droga Mleczna</div>
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('sky_clouds')" data-i18n="wp_clouds">Ciemne Chmury</div>
+                    </div>
+                    <div class="preset-category-title">💾 <span data-i18n="cat_nostalgia">Nostalgia</span></div>
+                    <div class="preset-bg-grid">
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('nostalgia_bliss')" data-i18n="wp_bliss">Klasyczna Sielanka (Bliss)</div>
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('nostalgia_synth')" data-i18n="wp_synth">Retrowave Grid</div>
+                    </div>
+                    <div class="preset-category-title">🎨 <span data-i18n="cat_cartoon">Kreskówka</span></div>
+                    <div class="preset-bg-grid">
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('toon_landscape')" data-i18n="wp_vector">Minimalistyczny Wektor</div>
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('toon_pixel')" data-i18n="wp_pixel">Pixel Art Room</div>
+                    </div>
+                    <div class="preset-category-title" data-i18n="cat_custom">Własne tło</div>
+                    <div class="preset-bg-grid">
+                        <div class="preset-bg-btn" onclick="applyPresetWallpaper('solid')" data-i18n="wp_solid_off">Clear Solid Off</div>
+                    </div>
+                    <div style="margin-top:15px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                        <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:5px;" data-i18n="custom_wp_label">Wklej bezpośredni URL obrazu lub ID tła:</label>
+                        <input type="text" id="custom-wallpaper-input" class="skype-input-box" placeholder="https://images.unsplash.com/... lub inny link">
+                        <button onclick="applyCustomWallpaperLink()" style="margin-top:8px; width:100%;" data-i18n="apply_wp_btn">Zastosuj wpisany adres</button>
+                    </div>
+                </div>
+
             </div>
         </div>
 
         <!-- ================= POSTS VIEW ================= -->
         <div id="tab-posts" class="tab-content">
-            <h2>AirSkype Global Feed</h2>
-            <div class="grid-layout">
+            <h2 style="font-weight:900;">Global Feed</h2>
+            <div class="grid-layout" style="max-width:100%;">
                 <div class="tile-card" style="grid-column: span 2;">
-                    <h3>Create Post</h3>
-                    <input type="text" id="post-text" class="skype-input-box" placeholder="What is happening?">
-                    <button onclick="sendPost()" style="margin-top:5px; padding:6px;">Publish</button>
+                    <h3 data-i18n="create_post_title">Utwórz bogaty wpis multimedialny</h3>
+                    <textarea id="post-text" class="skype-input-box" style="height:70px; resize:none; font-family:inherit;" data-i18n-placeholder="post_textarea_placeholder" placeholder="Co tam u Ciebie słychać?"></textarea>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:5px;">
+                        <input type="text" id="post-image-url" class="skype-input-box" data-i18n-placeholder="post_img_placeholder" placeholder="Link do zdjęcia (.jpg, .png, .gif)">
+                        <input type="text" id="post-video-url" class="skype-input-box" data-i18n-placeholder="post_vid_placeholder" placeholder="Link do wideo (.mp4)">
+                    </div>
+                    
+                    <button onclick="createNewMultimediaPost()" style="align-self: flex-start; margin-top:5px;" data-i18n="publish_btn">Opublikuj wpis</button>
                 </div>
             </div>
-            <div id="posts-container" style="max-width:900px;"></div>
+            
+            <div id="posts-feed-stream" style="max-width:900px; margin-top:15px; display:flex; flex-direction:column; gap:15px;"></div>
         </div>
 
-        <!-- ================= ABOUT YOU (IDENTITY) VIEW ================= -->
+        <!-- ================= ABOUT VIEW ================= -->
         <div id="tab-about" class="tab-content">
-            <h2 class="lang-txt" data-en="Profile Identity" data-pl="Tożsamość Profilu">Tożsamość Profilu</h2>
+            <h2 style="font-weight:900;" data-i18n="profile_title">Tożsamość Profilu (Alpha Network)</h2>
             <div class="grid-layout">
+                
                 <div class="tile-card" id="unregistered-form">
-                    <h3 class="lang-txt" data-en="Register Identity" data-pl="Zarejestruj profil">Zarejestruj profil</h3>
-                    <input type="text" id="user-phone" class="skype-input-box" placeholder="Phone Number / Network ID">
-                    <input type="text" id="user-nick" class="skype-input-box" placeholder="Your Nickname">
-                    <button onclick="performLogin()">Save Profile</button>
+                    <h3 data-i18n="register_title">Zarejestruj węzeł sieci AirSkype Alpha</h3>
+                    <p style="margin:0; font-size:13px; opacity:0.6;" data-i18n="register_desc">Zarejestruj się wyłącznie za pomocą swojego unikalnego numeru telefonu.</p>
+                    <input type="text" id="user-phone" class="skype-input-box" data-i18n-placeholder="phone_placeholder" placeholder="Numer telefonu (np. +48...)">
+                    <input type="text" id="user-nick" class="skype-input-box" data-i18n-placeholder="nick_placeholder" placeholder="Twój Alpha Nickname">
+                    <button onclick="performLogin()" data-i18n="authorize_btn">Autoryzuj bezpieczny profil</button>
                 </div>
-                <div class="tile-card" id="registered-badge" style="display:none; text-align:center;">
-                    <h3 class="lang-txt" data-en="Account Active" data-pl="Profil aktywny">Profil aktywny</h3>
-                    <h2 id="view-nick" style="margin:10px 0 0 0;">-</h2>
-                    <p id="view-phone" style="margin:0 0 15px 0; opacity:0.7;">-</p>
-                    <button onclick="performLogout()" style="background:red; color:white; border:none; padding:5px;">Logout</button>
+
+                <div class="tile-card" id="registered-badge" style="display:none; flex-direction: column; gap:16px;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div class="user-avatar-render" id="profile-pane-avatar-view" style="width: 70px; height: 70px; font-size: 34px;">🤖</div>
+                        <div>
+                            <h2 id="view-nick" style="margin:0; font-weight:900; color:var(--main-color);">-</h2>
+                            <p id="view-phone" style="margin:4px 0 0 0; opacity:0.6;">-</p>
+                        </div>
+                    </div>
+                    
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 15px;">
+                        <h3 style="font-size:1.1em; margin-bottom:8px;" data-i18n="change_avatar_title">Zmień zdjęcie profilowe</h3>
+                        <label style="font-size:12px; font-weight:bold; opacity:0.7;" data-i18n="avatar_lib_label">Wybierz ikonę z biblioteki Alpha:</label>
+                        <div class="avatar-selectors-scroll" id="avatar-icon-library-grid"></div>
+                        <div style="margin-top:12px;">
+                            <label style="font-size:12px; font-weight:bold; opacity:0.7;" data-i18n="custom_avatar_label">Wklej własny adres URL zdjęcia profilowego:</label>
+                            <div style="display:flex; gap:8px; margin-top:4px;">
+                                <input type="text" id="custom-avatar-url-input" class="skype-input-box" style="padding:6px 10px;" placeholder="https://link-do-grafiki.jpg">
+                                <button onclick="applyCustomAvatarURL()" style="padding:6px 14px; font-size:0.9em;" data-i18n="set_avatar_btn">Ustaw</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="performLogout()" style="background:#e74c3c; width:100%; margin-top:10px;" data-i18n="logout_btn">Wyloguj i rozłącz węzeł</button>
                 </div>
             </div>
         </div>
@@ -340,273 +604,724 @@
     </div>
 
     <script>
-        // --- MULTIMEDIA SOUNDS ENGINE (WEB AUDIO API) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playSoundNotification() {
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'sine'; osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            osc.start(); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            osc.stop(audioCtx.currentTime + 0.15);
+        // --- SŁOWNIKI DO TŁUMACZEŃ ---
+        const i18nData = {
+            pl: {
+                search_placeholder: "Wyszukaj...", add_contact: "Dodaj Kontakt", nav_chats: "Rozmowy", nav_personalize: "Personalizuj",
+                nav_posts: "Posts Feed", delete_contact: "Usuń kontakt", media_img_placeholder: "Załącz obraz URL (.jpg, .png)",
+                media_vid_placeholder: "Załącz wideo URL (.mp4)", type_msg_placeholder: "Wpisz wiadomość...", send_btn: "Wyślij",
+                personalize_title: "Centrum Personalizacji", lang_matrix_title: "Globalna Lokalizacja Językowa",
+                lang_matrix_desc: "Wybierz dowolny język świata (w tym języki regionalne i mniejszościowe):", os_matrix_title: "Optymalizacja Środowiska (OS Matrix)",
+                os_matrix_desc: "Wybierz swój system operacyjny, aby dostosować fizykę klatek animacji i optymalizację silnika renderującego:",
+                theme_mode_title: "Tryb Wizualny (Theme)", accent_color_title: "Główny Kolor Akcentu", wallpaper_library_title: "Wybór Tła Pulpitu (Wallpaper Library)",
+                cat_city: "Miasto", wp_tokyo: "Cyber Neon Tokio", wp_metropolis: "Nocna Metropolia", cat_mountains: "Góry", wp_peaks: "Śnieżne Szczyty",
+                wp_alpine: "Alpejski Zmierzch", cat_sky: "Niebo", wp_milky: "Droga Mleczna", wp_clouds: "Ciemne Chmury", cat_nostalgia: "Nostalgia",
+                wp_bliss: "Klasyczna Sielanka (Bliss)", wp_synth: "Retrowave Grid", cat_cartoon: "Kreskówka", wp_vector: "Minimalistyczny Wektor",
+                wp_pixel: "Pixel Art Room", cat_custom: "Własne tło", wp_solid_off: "Clear Solid Off", custom_wp_label: "Wklej bezpośredni URL obrazu lub ID tła:",
+                apply_wp_btn: "Zastosuj wpisany adres", create_post_title: "Utwórz bogaty wpis multimedialny", post_textarea_placeholder: "Co tam u Ciebie słychać?",
+                post_img_placeholder: "Link do zdjęcia (.jpg, .png, .gif)", post_vid_placeholder: "Link do wideo (.mp4)", publish_btn: "Opublikuj wpis",
+                profile_title: "Tożsamość Profilu (Alpha Network)", register_title: "Zarejestruj węzeł sieci AirSkype Alpha",
+                register_desc: "Zarejestruj się wyłącznie za pomocą swojego unikalnego numeru telefonu.", phone_placeholder: "Numer telefonu (np. +48...)",
+                nick_placeholder: "Twój Alpha Nickname", authorize_btn: "Autoryzuj bezpieczny profil", change_avatar_title: "Zmień zdjęcie profilowe",
+                avatar_lib_label: "Wybierz ikonę z biblioteki Alpha:", custom_avatar_label: "Wklej własny adres URL zdjęcia profilowego:",
+                set_avatar_btn: "Ustaw", logout_btn: "Wyloguj i rozłącz węzeł", no_contacts: "Brak kontaktów", no_posts: "Brak wpisów na osi czasu.",
+                favorites_section: "// Ulubione //", all_contacts_section: "// Wszystkie Kontakty //"
+            },
+            en: {
+                search_placeholder: "Search...", add_contact: "Add Contact", nav_chats: "Chats", nav_personalize: "Personalize",
+                nav_posts: "Posts Feed", delete_contact: "Delete contact", media_img_placeholder: "Attach image URL (.jpg, .png)",
+                media_vid_placeholder: "Attach video URL (.mp4)", type_msg_placeholder: "Type a message...", send_btn: "Send",
+                personalize_title: "Personalization Hub", lang_matrix_title: "Global Localization Matrix",
+                lang_matrix_desc: "Choose any language in the world (including regional and minority languages):", os_matrix_title: "Environment Optimization (OS Matrix)",
+                os_matrix_desc: "Select your operating system to customize frame physics and rendering engine optimization:",
+                theme_mode_title: "Visual Theme", accent_color_title: "Main Accent Color", wallpaper_library_title: "Wallpaper Library Selection",
+                cat_city: "City", wp_tokyo: "Cyber Neon Tokyo", wp_metropolis: "Night Metropolis", cat_mountains: "Mountains", wp_peaks: "Snowy Peaks",
+                wp_alpine: "Alpine Twilight", cat_sky: "Sky", wp_milky: "Milky Way", wp_clouds: "Dark Clouds", cat_nostalgia: "Nostalgia",
+                wp_bliss: "Classic Bliss", wp_synth: "Retrowave Grid", cat_cartoon: "Art / Vector", wp_vector: "Minimalist Vector",
+                wp_pixel: "Pixel Art Room", cat_custom: "Custom Background", wp_solid_off: "Clear Solid Off", custom_wp_label: "Paste direct image URL or background ID:",
+                apply_wp_btn: "Apply typed link", create_post_title: "Create rich multimedia post", post_textarea_placeholder: "What's on your mind?",
+                post_img_placeholder: "Photo link (.jpg, .png, .gif)", post_vid_placeholder: "Video link (.mp4)", publish_btn: "Publish post",
+                profile_title: "Profile Identity (Alpha Network)", register_title: "Register AirSkype Alpha network node",
+                register_desc: "Register exclusively using your unique phone number.", phone_placeholder: "Phone number (e.g., +44...)",
+                nick_placeholder: "Your Alpha Nickname", authorize_btn: "Authorize secure profile", change_avatar_title: "Change profile picture",
+                avatar_lib_label: "Choose icon from Alpha library:", custom_avatar_label: "Paste custom profile picture URL:",
+                set_avatar_btn: "Set", logout_btn: "Logout & disconnect node", no_contacts: "No contacts found", no_posts: "No posts on timeline.",
+                favorites_section: "// Favorites //", all_contacts_section: "// All Contacts //"
+            },
+            ca: {
+                search_placeholder: "Cerca...", add_contact: "Afegir Contacte", nav_chats: "Xats", nav_personalize: "Personalitzar",
+                nav_posts: "Feed de Publicacions", delete_contact: "Eliminar contacte", media_img_placeholder: "Adjuntar URL d'imatge (.jpg, .png)",
+                media_vid_placeholder: "Adjuntar URL de vídeo (.mp4)", type_msg_placeholder: "Escriu un missatge...", send_btn: "Enviar",
+                personalize_title: "Centre de Personalització", lang_matrix_title: "Matriu de Localització Global",
+                lang_matrix_desc: "Tria qualsevol idioma del món (inclosos idiomes regionals i de minories):", os_matrix_title: "Optimització de l'Entorn (OS Matrix)",
+                os_matrix_desc: "Selecciona el teu sistema operatiu per personalitzar la física dels fotogrames i l'optimització del motor de renderitzat:",
+                theme_mode_title: "Tema Visual", accent_color_title: "Color d'Accent Principal", wallpaper_library_title: "Biblioteca de Fons de Pantalla",
+                cat_city: "Ciutat", wp_tokyo: "Cyber Neon Tòquio", wp_metropolis: "Metròpolis Nocturna", cat_mountains: "Muntanyes", wp_peaks: "Pics Nevats",
+                wp_alpine: "Crepuscle Alpí", cat_sky: "Cel", wp_milky: "Via Làctia", wp_clouds: "Núvols Foscs", cat_nostalgia: "Nostàlgia",
+                wp_bliss: "Bliss Clàssic", wp_synth: "Retrowave Grid", cat_cartoon: "Art / Vector", wp_vector: "Vector Minimalista",
+                wp_pixel: "Sala de Píxel Art", cat_custom: "Fons Personalitzat", wp_solid_off: "Clear Solid Off", custom_wp_label: "Enganxa l'URL directa de la imatge o l'ID del fons:",
+                apply_wp_btn: "Aplicar enllaç", create_post_title: "Crear publicació multimèdia", post_textarea_placeholder: "En què estàs pensant?",
+                post_img_placeholder: "Enllaç de foto (.jpg, .png)", post_vid_placeholder: "Enllaç de vídeo (.mp4)", publish_btn: "Publicar",
+                profile_title: "Identitat del Perfil (Alpha Network)", register_title: "Registrar node de xarxa AirSkype Alpha",
+                register_desc: "Registra't exclusivament amb el teu número de telèfon únic.", phone_placeholder: "Número de telèfon (ex. +34...)",
+                nick_placeholder: "El teu Nickname d'Alpha", authorize_btn: "Autoritzar perfil segur", change_avatar_title: "Canviar imatge de perfil",
+                avatar_lib_label: "Tria una icona de la biblioteca Alpha:", custom_avatar_label: "Enganxa l'URL de la imatge de perfil personalitzada:",
+                set_avatar_btn: "Establir", logout_btn: "Tancar sessió i desconnectar", no_contacts: "No s'han trobat contactes", no_posts: "No hi ha publicacions a la cronologia.",
+                favorites_section: "// Favorits //", all_contacts_section: "// Tots els Contactes //"
+            },
+            gd: {
+                search_placeholder: "Lorg...", add_contact: "Cuir Caraid ris", nav_chats: "Cabadaich", nav_personalize: "Pearsanaich",
+                nav_posts: "Biadh nam Post", delete_contact: "Sguab às caraid", media_img_placeholder: "Ceangail URL ìomhaigh (.jpg, .png)",
+                media_vid_placeholder: "Ceangail URL bhidio (.mp4)", type_msg_placeholder: "Sgrìobh teachdaireachd...", send_btn: "Cuir",
+                personalize_title: "Ionad Pearsanachaidh", lang_matrix_title: "Matrix Cànain na Cruinne",
+                lang_matrix_desc: "Tagh cànan sam bith air an t-saoghal (gabhail a-steach cànanan roinneil is mion-chànanan):", os_matrix_title: "Optimization Àrainneachd (OS Matrix)",
+                os_matrix_desc: "Tagh an siostam-obrachaidh agad gus fiosaig fhrèamaichean agus an t-einnsean renderachaidh a ghleusadh:",
+                theme_mode_title: "Cuspair Lèirsinneach", accent_color_title: "Prìomh Dhath", wallpaper_library_title: "Leabharlann Pàipear-balla",
+                cat_city: "Cathair", wp_tokyo: "Cyber Neon Tokyo", wp_metropolis: "Cathair na h-Oidhche", cat_mountains: "Beanntan", wp_peaks: "Beanntan Sneachda",
+                wp_alpine: "Beul na h-Oidhche Alpach", cat_sky: "An Coimheach", wp_milky: "Slighe na Bainne", wp_clouds: "Sgòthan Dorcha", cat_nostalgia: "Nostalgia",
+                wp_bliss: "Bliss Clasaigeach", wp_synth: "Retrowave Grid", cat_cartoon: "Ealain Vector", wp_vector: "Vector Mion-fhiosrach",
+                wp_pixel: "Seòmar Pixel Art", cat_custom: "Cùl-raon Custom", wp_solid_off: "Clear Solid Off", custom_wp_label: "Cuir a-steach URL ìomhaigh dìreach no ID cùl-raon:",
+                apply_wp_btn: "Cuir an sàs am ceangal", create_post_title: "Cruthaich post meadhanan beairteach", post_textarea_placeholder: "Dè tha air do inntinn?",
+                post_img_placeholder: "Ceangal dealbh (.jpg, .png)", post_vid_placeholder: "Ceangal bhidio (.mp4)", publish_btn: "Foillsich post",
+                profile_title: "Dearbh-aithne Pròifil (Alpha Network)", register_title: "Clàraich nod lìonra AirSkype Alpha",
+                register_desc: "Clàraich a-mhàin a' cleachdadh an àireamh fòn sònraichte agad.", phone_placeholder: "Àireamh fòn (m.e., +44...)",
+                nick_placeholder: "An t-Ainm Alpha agad", authorize_btn: "Ùghdarraich pròifil thèarainte", change_avatar_title: "Atharraich dealbh pròifil",
+                avatar_lib_label: "Tagh ìomhaigh bhon leabharlann Alpha:", custom_avatar_label: "Cuir a-steach URL dealbh pròifil gnàthaichte:",
+                set_avatar_btn: "Suidhich", logout_btn: "Log a-mach & dì-cheangail", no_contacts: "Chan eil caraidean ann", no_posts: "Chan eil puist ann fhathast.",
+                favorites_section: "// Favorites //", all_contacts_section: "// Na h-uile Caraidean //"
+            },
+            sco: {
+                search_placeholder: "Luik for...", add_contact: "Eke Contact", nav_chats: "Blethers", nav_personalize: "Mak It Yer Ain",
+                nav_posts: "Post Feed", delete_contact: "Daurk contact oot", media_img_placeholder: "Pit in image URL (.jpg, .png)",
+                media_vid_placeholder: "Pit in video URL (.mp4)", type_msg_placeholder: "Scrive a message...", send_btn: "Send",
+                personalize_title: "Personalization Neuk", lang_matrix_title: "Warld-Wide Leid Matrix",
+                lang_matrix_desc: "Chaitch ony leid i the warld (e'en regional an minority leids):", os_matrix_title: "OS Matrix Settins",
+                os_matrix_desc: "Wale yer computer system for bonnie, smuith animations an quick renderin:",
+                theme_mode_title: "Luik Mode", accent_color_title: "Heid Colour", wallpaper_library_title: "Wallpaper Kist",
+                cat_city: "Toun", wp_tokyo: "Cyber Neon Tokyo", wp_metropolis: "Night Toun", cat_mountains: "Hills", wp_peaks: "Snaw-tapt Hills",
+                wp_alpine: "Alpine Gloamin", cat_sky: "Lift", wp_milky: "Gate o Heavin", wp_clouds: "Murk Clos", cat_nostalgia: "Auld Lang Syne",
+                wp_bliss: "Auld Bliss", wp_synth: "Retrowave Grid", cat_cartoon: "Vector Airt", wp_vector: "Smairt Vector",
+                wp_pixel: "Pixel Art Chaumer", cat_custom: "Yer Ain Background", wp_solid_off: "Clear Solid Off", custom_wp_label: "Paste link for picture or background ID:",
+                apply_wp_btn: "Set link", create_post_title: "Mak a rich multimedia post", post_textarea_placeholder: "Whit's on yer thocht?",
+                post_img_placeholder: "Picture link (.jpg, .png)", post_vid_placeholder: "Video link (.mp4)", publish_btn: "Publish post",
+                profile_title: "Profile Wark (Alpha Network)", register_title: "Register AirSkype Alpha node",
+                register_desc: "Register yersel purely wi yer ain unique phone nummer.", phone_placeholder: "Phone nummer (e.g., +44...)",
+                nick_placeholder: "Yer Alpha Nickname", authorize_btn: "Steek secure profile", change_avatar_title: "Chang picture",
+                avatar_lib_label: "Wale an icon frae the Alpha library:", custom_avatar_label: "Paste URL for yer ain profile picture:",
+                set_avatar_btn: "Set", logout_btn: "Log oot & lowse node", no_contacts: "Nae contacts fund", no_posts: "Nae posts on timeline.",
+                favorites_section: "// Favorites //", all_contacts_section: "// Aa Contacts //"
+            },
+            es: {
+                search_placeholder: "Buscar...", add_contact: "Añadir Contacto", nav_chats: "Chats", nav_personalize: "Personalizar",
+                nav_posts: "Feed de Posts", delete_contact: "Eliminar contacto", media_img_placeholder: "Adjuntar URL de imagen (.jpg, .png)",
+                media_vid_placeholder: "Adjuntar URL de video (.mp4)", type_msg_placeholder: "Escribir mensaje...", send_btn: "Enviar",
+                personalize_title: "Centro de Personalización", lang_matrix_title: "Matriz de Localización Global",
+                lang_matrix_desc: "Selecciona cualquier idioma del mundo:", os_matrix_title: "Optimización de Entorno (OS Matrix)",
+                os_matrix_desc: "Selecciona tu sistema operativo para adaptar animaciones y renderizado:",
+                theme_mode_title: "Tema Visual", accent_color_title: "Color de Acento", wallpaper_library_title: "Biblioteca de Fondos de Pantalla",
+                cat_city: "Ciudad", wp_tokyo: "Cyber Neon Tokio", wp_metropolis: "Metrópolis Nocturna", cat_mountains: "Montañas", wp_peaks: "Picos Nevados",
+                wp_alpine: "Atardecer Alpino", cat_sky: "Cielo", wp_milky: "Vía Láctea", wp_clouds: "Nubes Oscuras", cat_nostalgia: "Nostalgia",
+                wp_bliss: "Felicidad Clásica", wp_synth: "Retrowave Grid", cat_cartoon: "Caricatura / Vector", wp_vector: "Vector Minimalista",
+                wp_pixel: "Sala de Píxel Art", cat_custom: "Fondo Personalizado", wp_solid_off: "Clear Solid Off", custom_wp_label: "Pega el URL de la imagen:",
+                apply_wp_btn: "Aplicar enlace", create_post_title: "Crear post multimedia", post_textarea_placeholder: "¿Qué estás pensando?",
+                post_img_placeholder: "Enlace de foto (.jpg, .png)", post_vid_placeholder: "Enlace de video (.mp4)", publish_btn: "Publicar post",
+                profile_title: "Identidad de Perfil (Alpha Network)", register_title: "Registrar nodo de red AirSkype Alpha",
+                register_desc: "Regístrate únicamente usando tu número de teléfono único.", phone_placeholder: "Número de teléfono (ej. +52...)",
+                nick_placeholder: "Tu Nickname de Alpha", authorize_btn: "Autorizar perfil seguro", change_avatar_title: "Cambiar foto de perfil",
+                avatar_lib_label: "Elige un icono de la biblioteca Alpha:", custom_avatar_label: "Pega el URL de tu foto de perfil:",
+                set_avatar_btn: "Establecer", logout_btn: "Cerrar sesión", no_contacts: "No hay contactos", no_posts: "No hay publicaciones.",
+                favorites_section: "// Favoritos //", all_contacts_section: "// Todos los Contactos //"
+            },
+            de: {
+                search_placeholder: "Suche...", add_contact: "Kontakt hinzufügen", nav_chats: "Chats", nav_personalize: "Personalisieren",
+                nav_posts: "Beitrags-Feed", delete_contact: "Kontakt löschen", media_img_placeholder: "Bild-URL anhängen (.jpg, .png)",
+                media_vid_placeholder: "Video-URL anhängen (.mp4)", type_msg_placeholder: "Nachricht eingeben...", send_btn: "Senden",
+                personalize_title: "Personalisierungs-Zentrum", lang_matrix_title: "Globale Lokalisierungsmatrix",
+                lang_matrix_desc: "Wählen Sie eine beliebige Sprache der Welt aus:", os_matrix_title: "Umgebungsoptimierung (OS Matrix)",
+                os_matrix_desc: "Wählen Sie Ihr Betriebssystem aus, um die Physik der Frames anzupassen:",
+                theme_mode_title: "Visuelles Design", accent_color_title: "Akzentfarbe", wallpaper_library_title: "Hintergrundbibliothek",
+                cat_city: "Stadt", wp_tokyo: "Cyber Neon Tokio", wp_metropolis: "Nächtliche Metropole", cat_mountains: "Berge", wp_peaks: "Schneebedeckte Gipfel",
+                wp_alpine: "Alpendämmerung", cat_sky: "Himmel", wp_milky: "Milchstraße", wp_clouds: "Dunkle Wolken", cat_nostalgia: "Nostalgie",
+                wp_bliss: "Klassisches Bliss", wp_synth: "Retrowave Grid", cat_cartoon: "Vektor / Kunst", wp_vector: "Minimalistischer Vektor",
+                wp_pixel: "Pixel-Art-Raum", cat_custom: "Benutzerdefinierter Hintergrund", wp_solid_off: "Clear Solid Off", custom_wp_label: "Fügen Sie die direkte Bild-URL ein:",
+                apply_wp_btn: "Link anwenden", create_post_title: "Rich-Media-Post erstellen", post_textarea_placeholder: "Was beschäftigt dich gerade?",
+                post_img_placeholder: "Bildlink (.jpg, .png)", post_vid_placeholder: "Videolink (.mp4)", publish_btn: "Beitrag veröffentlichen",
+                profile_title: "Profil-Identität (Alpha Network)", register_title: "AirSkype Alpha Netzwerkknoten registrieren",
+                register_desc: "Registrieren Sie sich ausschließlich mit Ihrer eindeutigen Telefonnummer.", phone_placeholder: "Telefonnummer (z. B. +49...)",
+                nick_placeholder: "Ihr Alpha-Spitzname", authorize_btn: "Sicheres Profil autorisieren", change_avatar_title: "Profilbild ändern",
+                avatar_lib_label: "Wählen Sie ein Icon aus der Alpha-Bibliothek:", custom_avatar_label: "Eigene Profilbild-URL einfügen:",
+                set_avatar_btn: "Festlegen", logout_btn: "Abmelden & Knoten trennen", no_contacts: "Keine Kontakte gefunden", no_posts: "Keine Beiträge auf der Timeline.",
+                favorites_section: "// Favoriten //", all_contacts_section: "// Alle Kontakte //"
+            }
+        };
+
+        let currentLang = localStorage.getItem('as3_matrix_lang') || 'pl';
+
+        function changeLanguage(langKey) {
+            currentLang = langKey;
+            localStorage.setItem('as3_matrix_lang', langKey);
+            
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (i18nData[currentLang][key]) {
+                    element.innerText = i18nData[currentLang][key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (i18nData[currentLang][key]) {
+                    element.setAttribute('placeholder', i18nData[currentLang][key]);
+                }
+            });
+
+            document.querySelectorAll('[id^="lang-"]').forEach(btn => btn.classList.remove('active-lang'));
+            const targetedBtn = document.getElementById('lang-' + langKey);
+            if(targetedBtn) targetedBtn.classList.add('active-lang');
+
+            renderContactsList();
+            renderPostsFeed();
+        }
+    </script>
+
+    <script>
+        // --- UX SOUND GENERATOR (WEB AUDIO API) ---
+        let audioCtx = null;
+        function playUXSound(frequency, duration, type = 'sine') {
+            try {
+                const ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                if(!audioCtx) audioCtx = ctx;
+                
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch(e) {}
         }
 
-        let ringInterval;
-        function startRingtone() {
-            ringInterval = setInterval(() => {
-                let osc = audioCtx.createOscillator();
-                let gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.type = 'triangle'; osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                osc.start(); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
-                osc.stop(audioCtx.currentTime + 0.4);
-            }, 1000);
-        }
-        function stopRingtone() { clearInterval(ringInterval); }
-
-        // --- CORE DATA ARCHITECTURE ---
-        let contacts = JSON.parse(localStorage.getItem('as3_contacts')) || [];
-        let posts = JSON.parse(localStorage.getItem('as3_posts')) || [];
+        // --- CORE DATABASE STATE ---
+        let contacts = JSON.parse(localStorage.getItem('as3_contacts')) || ["Mom", "Dad", "Brother", "Sister"];
+        let favorites = JSON.parse(localStorage.getItem('as3_favorites')) || [];
+        let posts = JSON.parse(localStorage.getItem('as3_multimedia_posts')) || [];
         let profile = JSON.parse(localStorage.getItem('as3_profile')) || null;
-        let currentLanguage = localStorage.getItem('as3_lang') || 'pl';
-        let currentThemeColor = localStorage.getItem('as3_color') || '#00a2ed';
         let selectedContact = null;
+        let peer = null, activeConn = null;
 
-        // P2P WebRTC Core
-        let peer, activeConn = null, activeCall = null, cameraStream = null;
+        const builtInIcons = [
+            "🤖","🚀","🛸","👾","💾","⚡","🔥","👑","🦊","🐱","🦁","🦄",
+            "🕶️","🎯","💎","🔮","💊","🎛️","🎧","🎮","💻","📡","⚙️","🛡️",
+            "🧬","🧪","☣️","☢️","☯️","💮","🌀","🌌","🪐","👺","💀","👻"
+        ];
 
         function initializeP2P() {
-            const endpointId = profile ? profile.phone : null;
-            peer = endpointId ? new Peer(endpointId) : new Peer();
-
-            peer.on('open', id => {
-                if(!profile) document.getElementById('name-indicator').innerText = `(ID: ${id})`;
-            });
-            peer.on('connection', conn => {
-                activeConn = conn;
-                setupDataChannels();
-            });
-            peer.on('call', call => {
-                startRingtone();
-                if(confirm("Incoming live video call! Accept?")) {
-                    stopRingtone();
-                    navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-                        cameraStream = stream;
-                        document.getElementById('call-overlay').style.display = 'flex';
-                        document.getElementById('myCameraView').srcObject = stream;
-                        call.answer(stream); activeCall = call;
-                        call.on('stream', rStream => document.getElementById('remoteCameraView').srcObject = rStream);
-                    });
-                } else { stopRingtone(); call.close(); }
-            });
+            try {
+                const endpointId = profile ? profile.phone : null;
+                peer = endpointId ? new Peer(endpointId) : new Peer();
+                peer.on('open', id => {
+                    if(!profile) document.getElementById('name-indicator').innerText = `(ID: ${id})`;
+                });
+                peer.on('connection', conn => {
+                    activeConn = conn;
+                    setupDataChannels();
+                });
+            } catch(e) {
+                console.log("PeerJS system initialized in local fallback mode.");
+            }
         }
 
-        // --- NAVIGATION INTERFACE ---
+        // --- STRUKTURA PRZEŁĄCZANIA ZAKŁADEK ---
         function switchTab(targetTab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(t => {
+                t.style.opacity = '0';
+                t.style.transform = 'scale(0.99) translateY(4px)';
+                setTimeout(() => t.classList.remove('active'), 150);
+            });
+
+            setTimeout(() => {
+                const activeTab = document.getElementById('tab-' + targetTab);
+                if(activeTab) {
+                    activeTab.classList.add('active');
+                    setTimeout(() => {
+                        activeTab.style.opacity = '1';
+                        activeTab.style.transform = 'scale(1) translateY(0)';
+                    }, 50);
+                }
+            }, 150);
+
             document.querySelectorAll('.skype-action-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('tab-' + targetTab).classList.add('active');
             const navBtn = document.getElementById(targetTab + '-nav-btn');
             if(navBtn) navBtn.classList.add('active');
+            playUXSound(440, 0.05, 'triangle');
         }
 
-        // --- LANGUAGE CORE IMPLEMENTATION ---
-        function changeLanguage(langCode) {
-            currentLanguage = langCode;
-            localStorage.setItem('as3_lang', langCode);
-            document.querySelectorAll('.lang-txt').forEach(el => {
-                el.innerText = el.getAttribute('data-' + langCode);
-            });
-            document.getElementById('lang-selector').value = langCode;
+        // --- OS MATRIX OPTIMIZATION ---
+        function applyOSOptimization(osKey) {
+            document.body.setAttribute('data-os', osKey);
+            localStorage.setItem('as3_optimized_os', osKey);
+            
+            document.querySelectorAll('[id^="os-"]').forEach(btn => btn.classList.remove('active-os'));
+            const targetedBtn = document.getElementById('os-' + osKey);
+            if(targetedBtn) targetedBtn.classList.add('active-os');
         }
 
-        // --- VISUAL COLOR PERSONALIZATION ---
+        // --- PERSONALIZATION ---
+        function setTheme(themeMode) {
+            if(themeMode === 'light') {
+                document.body.classList.remove('dark-theme');
+                document.body.classList.add('light-theme');
+            } else {
+                document.body.classList.remove('light-theme');
+                document.body.classList.add('dark-theme');
+            }
+            localStorage.setItem('as3_solid_theme', themeMode);
+        }
+
         function applyCustomColor(hex) {
-            currentThemeColor = hex;
-            localStorage.setItem('as3_color', hex);
-            const r = document.documentElement;
-            r.style.setProperty('--main-color', hex);
-            r.style.setProperty('--text-color', hex);
-            document.getElementById('color-picker').value = hex;
+            document.documentElement.style.setProperty('--main-color', hex);
+            localStorage.setItem('as3_solid_color', hex);
         }
 
-        function saveWallpaper() {
-            const url = document.getElementById('wallpaper-input').value.trim();
-            if(!url) return;
-            document.documentElement.style.setProperty('--bg-image', `url('${url}')`);
-            localStorage.setItem('as3_wallpaper', url);
-        }
-        function clearWallpaper() {
-            document.documentElement.style.setProperty('--bg-image', 'none');
-            document.getElementById('wallpaper-input').value = "";
-            localStorage.removeItem('as3_wallpaper');
+        function applyPresetWallpaper(key) {
+            let url = 'none';
+            if(key === 'city_neon') url = "url('https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1920')";
+            if(key === 'city_dark') url = "url('https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=1920')";
+            if(key === 'mount_snow') url = "url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1920')";
+            if(key === 'mount_sunset') url = "url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1920')";
+            if(key === 'sky_stars') url = "url('https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1920')";
+            if(key === 'sky_clouds') url = "url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?q=80&w=1920')";
+            if(key === 'nostalgia_bliss') url = "url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1920')"; 
+            if(key === 'nostalgia_synth') url = "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920')";
+            if(key === 'toon_landscape') url = "url('https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=1920')";
+            if(key === 'toon_pixel') url = "url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=1920')";
+            
+            document.documentElement.style.setProperty('--bg-image', url);
+            localStorage.setItem('as3_active_wallpaper_url', url);
         }
 
-        // --- CONTACT MANAGEMENT ENGINE ---
-        function renderContactsList(filterString = '') {
-            const zone = document.getElementById('contacts-zone');
-            const searchVal = filterString.toLowerCase().trim();
-            const filtered = contacts.filter(c => c.toLowerCase().includes(searchVal));
+        function applyCustomWallpaperLink() {
+            const val = document.getElementById('custom-wallpaper-input').value.trim();
+            if(!val) return;
+            const computedUrl = `url('${val}')`;
+            document.documentElement.style.setProperty('--bg-image', computedUrl);
+            localStorage.setItem('as3_active_wallpaper_url', computedUrl);
+        }
 
-            if(filtered.length === 0) {
-                zone.innerHTML = '<span style="font-size:12px; opacity:0.5; text-align:center;">Empty</span>';
-                return;
+        // --- OBSŁUGA DRAG & DROP (PRZECIĄGNIJ I UPUŚĆ) ---
+        function drag(ev, contactName) {
+            ev.dataTransfer.setData("text/plain", contactName);
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.add('dragover');
+        }
+
+        function dragLeave(ev) {
+            ev.currentTarget.classList.remove('dragover');
+        }
+
+        function drop(ev, targetSection) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('dragover');
+            
+            const contactName = ev.dataTransfer.getData("text/plain");
+            if (!contactName) return;
+
+            if (targetSection === 'favorites') {
+                if (!favorites.includes(contactName)) {
+                    favorites.push(contactName);
+                    contacts = contacts.filter(c => c !== contactName);
+                }
+            } else if (targetSection === 'all') {
+                if (favorites.includes(contactName)) {
+                    favorites = favorites.filter(c => c !== contactName);
+                    if (!contacts.includes(contactName)) {
+                        contacts.push(contactName);
+                    }
+                }
             }
 
-            zone.innerHTML = filtered.map(c => `
-                <button class="skype-action-btn" style="text-align:left; display:flex; justify-content:space-between; align-items:center;" onclick="openChatWith('${c}')">
-                    <span>${c}</span>
-                    <span style="width:10px; height:10px; background:green; border-radius:50%;"></span>
-                </button>
-            `).join('');
+            localStorage.setItem('as3_contacts', JSON.stringify(contacts));
+            localStorage.setItem('as3_favorites', JSON.stringify(favorites));
+            
+            playUXSound(523.25, 0.08, 'triangle'); // Krótki retro dźwięk zatwierdzenia drag-dropa
+            renderContactsList();
         }
 
-        function filterContacts() {
-            const val = document.getElementById('search-input').value;
-            renderContactsList(val);
+        // --- RENDEROWANIE DRAGGABLE KONTAKTÓW ---
+        function renderContactsList(filterString = '') {
+            const zone = document.getElementById('contacts-zone');
+            const favZone = document.getElementById('favorites-zone');
+            const searchVal = filterString.toLowerCase().trim();
+            
+            const filteredAll = contacts.filter(c => c.toLowerCase().includes(searchVal));
+            const filteredFavs = favorites.filter(c => c.toLowerCase().includes(searchVal));
+
+            // Render strefy: Ulubione
+            if(filteredFavs.length === 0) {
+                favZone.innerHTML = `<span style="font-size:12px; opacity:0.3; display:block; padding:10px; text-align:center;">Przeciągnij kontakt tutaj</span>`;
+            } else {
+                favZone.innerHTML = filteredFavs.map(c => `
+                    <div class="draggable-contact ${selectedContact === c ? 'selected' : ''}" 
+                         draggable="true" 
+                         ondragstart="drag(event, '${c}')" 
+                         onclick="openChatWith('${c}')">
+                        <span>⭐ ${c}</span>
+                        <div class="status-dot"></div>
+                    </div>
+                `).join('');
+            }
+
+            // Render strefy: Wszystkie
+            if(filteredAll.length === 0) {
+                zone.innerHTML = `<span style="font-size:12px; opacity:0.3; display:block; padding:10px; text-align:center;">Brak kontaktów</span>`;
+            } else {
+                zone.innerHTML = filteredAll.map(c => `
+                    <div class="draggable-contact ${selectedContact === c ? 'selected' : ''}" 
+                         draggable="true" 
+                         ondragstart="drag(event, '${c}')" 
+                         onclick="openChatWith('${c}')">
+                        <span>👤 ${c}</span>
+                        <div class="status-dot"></div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function filterContacts() { 
+            renderContactsList(document.getElementById('search-input').value); 
         }
 
         function openAddContact() {
-            const name = prompt(currentLanguage === 'pl' ? "Wpisz ID/Numer kontaktu:" : "Enter Contact ID/Phone:");
-            if(name) {
-                contacts.push(name);
-                localStorage.setItem('as3_contacts', JSON.stringify(contacts));
-                renderContactsList();
+            const name = prompt("Wpisz ID/Numer nowego kontaktu:");
+            if(name) { 
+                const cleanedName = name.trim();
+                if(!cleanedName) return;
+                if(contacts.includes(cleanedName) || favorites.includes(cleanedName)) return alert("Kontakt już istnieje!");
+                contacts.push(cleanedName); 
+                localStorage.setItem('as3_contacts', JSON.stringify(contacts)); 
+                renderContactsList(); 
             }
         }
 
         function openChatWith(name) {
             selectedContact = name;
+            
             document.getElementById('chat-welcome-screen').style.display = 'none';
             document.getElementById('chat-active-screen').style.display = 'flex';
             document.getElementById('active-chat-title').innerText = name;
             document.getElementById('messages-stream').innerHTML = '';
             
-            if(peer) {
-                activeConn = peer.connect(name);
-                setupDataChannels();
+            renderContactsList();
+
+            if(peer) { 
+                try {
+                    activeConn = peer.connect(name); 
+                    setupDataChannels(); 
+                } catch(e) {}
             }
+            playUXSound(600, 0.04, 'sine');
         }
 
         function deleteCurrentContact() {
+            if(!selectedContact) return;
             contacts = contacts.filter(c => c !== selectedContact);
+            favorites = favorites.filter(c => c !== selectedContact);
             localStorage.setItem('as3_contacts', JSON.stringify(contacts));
-            selectedContact = null;
+            localStorage.setItem('as3_favorites', JSON.stringify(favorites));
+            selectedContact = null; 
             renderContactsList();
             document.getElementById('chat-welcome-screen').style.display = 'flex';
             document.getElementById('chat-active-screen').style.display = 'none';
         }
 
-        // --- DATA COMMUNICATIONS (CHAT) ---
-        function setupDataChannels() {
-            activeConn.on('data', data => {
-                appendChatMessage(data.payload, 'remote');
-                playSoundNotification();
-            });
+        // --- KOMUNIKACJA CZATU ---
+        function setupDataChannels() { 
+            if(!activeConn) return;
+            activeConn.on('data', data => { 
+                appendChatMessage(data.payload, 'remote', data.image, data.video); 
+                playUXSound(880, 0.12, 'sine');
+            }); 
         }
 
         function transmitMessage() {
-            const field = document.getElementById('message-field');
-            const text = field.value.trim();
-            if(!text || !activeConn) return;
+            const field = document.getElementById('message-field'); 
+            const imgField = document.getElementById('chat-media-image');
+            const videoField = document.getElementById('chat-media-video');
 
-            activeConn.send({ payload: text });
-            appendChatMessage(text, 'my');
-            playSoundNotification();
-            field.value = '';
+            const text = field.value.trim();
+            const imageUrl = imgField.value.trim() || null;
+            const videoUrl = videoField.value.trim() || null;
+
+            if(!text && !imageUrl && !videoUrl) return;
+
+            // Wyślij pakiet przez P2P jeśli połączono
+            if(activeConn) {
+                try {
+                    const payloadPacket = { payload: text, image: imageUrl, video: videoUrl };
+                    activeConn.send(payloadPacket); 
+                } catch(e) {}
+            }
+            
+            appendChatMessage(text, 'my', imageUrl, videoUrl); 
+            playUXSound(659.25, 0.08, 'sine');
+            
+            field.value = ''; imgField.value = ''; videoField.value = '';
         }
 
-        function appendChatMessage(txt, emitter) {
+        function appendChatMessage(txt, emitter, img = null, vid = null) {
             const stream = document.getElementById('messages-stream');
-            stream.innerHTML += `<div class="msg-bubble ${emitter}">${txt}</div>`;
+            let innerContent = '';
+            
+            if(txt) innerContent += `<div>${txt}</div>`;
+            if(img) innerContent += `<img src="${img}" alt="Shared Image">`;
+            if(vid) innerContent += `<video src="${vid}" controls></video>`;
+
+            stream.innerHTML += `<div class="msg-bubble ${emitter}">${innerContent}</div>`;
             stream.scrollTop = stream.scrollHeight;
         }
 
-        // --- REALTIME VIDEO ENGINE ---
-        function startVideoCall() {
-            if(!selectedContact) return;
-            startRingtone();
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(stream => {
-                stopRingtone();
-                cameraStream = stream;
-                document.getElementById('call-overlay').style.display = 'flex';
-                document.getElementById('myCameraView').srcObject = stream;
-                
-                const call = peer.call(selectedContact, stream);
-                activeCall = call;
-                call.on('stream', rStream => document.getElementById('remoteCameraView').srcObject = rStream);
-            }).catch(err => { stopRingtone(); alert("Camera capture failed: " + err); });
+        // --- SYSTEM FEEDU POSTÓW (BUG-FREE) ---
+        function handlePostReaction(postId, type) {
+            const userId = profile ? profile.phone : 'guest_session';
+            const target = posts.find(p => p.id === postId);
+            if(!target) return;
+
+            if(!target.votedUpUsers) target.votedUpUsers = [];
+            if(!target.votedDownUsers) target.votedDownUsers = [];
+
+            if(type === 'like') {
+                if(target.votedUpUsers.includes(userId)) {
+                    target.votedUpUsers = target.votedUpUsers.filter(u => u !== userId);
+                } else {
+                    target.votedUpUsers.push(userId);
+                    target.votedDownUsers = target.votedDownUsers.filter(u => u !== userId);
+                }
+            } else if(type === 'dislike') {
+                if(target.votedDownUsers.includes(userId)) {
+                    target.votedDownUsers = target.votedDownUsers.filter(u => u !== userId);
+                } else {
+                    target.votedDownUsers.push(userId);
+                    target.votedUpUsers = target.votedUpUsers.filter(u => u !== userId);
+                }
+            }
+
+            target.likes = target.votedUpUsers.length;
+            target.dislikes = target.votedDownUsers.length;
+
+            localStorage.setItem('as3_multimedia_posts', JSON.stringify(posts));
+            renderPostsFeed();
         }
 
-        function terminateCall() {
-            stopRingtone();
-            if(activeCall) activeCall.close();
-            if(cameraStream) cameraStream.getTracks().forEach(track => track.stop());
-            document.getElementById('call-overlay').style.display = 'none';
+        function createNewMultimediaPost() {
+            const textInp = document.getElementById('post-text');
+            const imgInp = document.getElementById('post-image-url');
+            const videoInp = document.getElementById('post-video-url');
+
+            const content = textInp.value.trim();
+            if(!content) return alert("Wpisz chociaż treść posta!");
+
+            const author = profile ? profile.nick : 'Anonim';
+            const currentAvatar = profile && profile.avatar ? profile.avatar : '🤖';
+            
+            const newPost = {
+                id: Date.now(),
+                sender: author,
+                senderAvatar: currentAvatar,
+                text: content,
+                image: imgInp.value.trim() || null,
+                video: videoInp.value.trim() || null,
+                likes: 0,
+                dislikes: 0,
+                votedUpUsers: [],
+                votedDownUsers: [],
+                comments: []
+            };
+
+            posts.unshift(newPost);
+            localStorage.setItem('as3_multimedia_posts', JSON.stringify(posts));
+            
+            textInp.value = ''; imgInp.value = ''; videoInp.value = '';
+            renderPostsFeed();
+            playUXSound(987.77, 0.1, 'sine');
         }
 
-        // --- BLOGS & POSTS MODULE ---
-        function sendPost() {
-            const inp = document.getElementById('post-text');
-            const txt = inp.value.trim(); if(!txt) return;
-            const author = profile ? profile.nick : 'Anonymous';
-            posts.unshift({ sender: author, content: txt });
-            localStorage.setItem('as3_posts', JSON.stringify(posts));
-            inp.value = ''; renderPostsFeed();
+        function appendCommentToPost(postId) {
+            const inputField = document.getElementById(`comment-input-${postId}`);
+            const commentText = inputField.value.trim();
+            if(!commentText) return;
+
+            const target = posts.find(p => p.id === postId);
+            if(target) {
+                const author = profile ? profile.nick : 'Anonim';
+                target.comments.push({ author: author, text: commentText });
+                localStorage.setItem('as3_multimedia_posts', JSON.stringify(posts));
+                inputField.value = '';
+                renderPostsFeed();
+                playUXSound(659.25, 0.08, 'sine');
+            }
         }
+
         function renderPostsFeed() {
-            const container = document.getElementById('posts-container');
-            if(posts.length === 0) { container.innerHTML = '<p style="opacity:0.5;">No posts feed available.</p>'; return; }
-            container.innerHTML = posts.map(p => `
-                <div class="post-item">
-                    <div class="profile-top-avatar"></div>
-                    <div>
-                        <b style="font-size:16px;">${p.sender}</b>
-                        <p style="margin:4px 0 0 0; color:#444;">${p.content}</p>
+            const container = document.getElementById('posts-feed-stream');
+            if(posts.length === 0) {
+                const msg = i18nData[currentLang]['no_posts'] || 'Brak wpisów.';
+                container.innerHTML = `<p style="opacity:0.4; padding:20px; text-align:center;">${msg}</p>`;
+                return;
+            }
+
+            const userId = profile ? profile.phone : 'guest_session';
+
+            container.innerHTML = posts.map(p => {
+                let mediaHtml = '';
+                if(p.image) mediaHtml += `<div class="post-media-container"><img src="${p.image}" alt="Post Graphic"></div>`;
+                if(p.video) mediaHtml += `<div class="post-media-container"><video src="${p.video}" controls></video></div>`;
+
+                let commentsHtml = p.comments.map(c => `
+                    <div class="comment-item">
+                        <strong>${c.author}:</strong> ${c.text}
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+
+                const hasLiked = p.votedUpUsers && p.votedUpUsers.includes(userId);
+                const hasDisliked = p.votedDownUsers && p.votedDownUsers.includes(userId);
+
+                let avatarRenderStr = p.senderAvatar && p.senderAvatar.startsWith('http') 
+                    ? `<div class="profile-top-avatar" style="width:32px; height:32px; background-image:url('${p.senderAvatar}')"></div>`
+                    : `<div class="profile-top-avatar" style="width:32px; height:32px; background: #fff; display:flex; align-items:center; justify-content:center;">${p.senderAvatar || '🤖'}</div>`;
+
+                return `
+                    <div class="post-item">
+                        <div class="post-header">
+                            ${avatarRenderStr}
+                            <strong style="color:var(--main-color); font-size:1.1em;">${p.sender}</strong>
+                        </div>
+                        <div style="font-weight:600; font-size:1.05em; line-height:1.4;">${p.text}</div>
+                        
+                        ${mediaHtml}
+
+                        <div class="post-actions-bar">
+                            <button class="action-count-btn ${hasLiked ? 'active-voted' : ''}" onclick="handlePostReaction(${p.id}, 'like')">👍 Like (${p.likes || 0})</button>
+                            <button class="action-count-btn ${hasDisliked ? 'active-voted' : ''}" onclick="handlePostReaction(${p.id}, 'dislike')">👎 Dislike (${p.dislikes || 0})</button>
+                        </div>
+
+                        <div class="comments-section">
+                            <div style="display:flex; gap:10px; margin-bottom:8px;">
+                                <input type="text" id="comment-input-${p.id}" class="skype-input-box" style="padding:6px 10px; font-size:0.9em;" placeholder="...">
+                                <button onclick="appendCommentToPost(${p.id})" style="padding:6px 14px; font-size:0.9em;">Comment</button>
+                            </div>
+                            ${commentsHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        // --- IDENTITY HANDLING ---
+        // --- SYSTEM PROFILU I AWATARÓW ---
+        function renderAvatarLibrary() {
+            const grid = document.getElementById('avatar-icon-library-grid');
+            if(grid) {
+                grid.innerHTML = builtInIcons.map(icon => `
+                    <div class="avatar-picker-cell" onclick="setProfileAvatar('${icon}', false)">${icon}</div>
+                `).join('');
+            }
+        }
+
+        function setProfileAvatar(value, isUrl = false) {
+            if(!profile) return;
+            profile.avatar = value;
+            localStorage.setItem('as3_profile', JSON.stringify(profile));
+            updateAvatarDOM();
+            renderPostsFeed();
+        }
+
+        function applyCustomAvatarURL() {
+            const url = document.getElementById('custom-avatar-url-input').value.trim();
+            if(!url) return alert("Wklej poprawny adres URL grafiki!");
+            setProfileAvatar(url, true);
+            document.getElementById('custom-avatar-url-input').value = '';
+        }
+
+        function updateAvatarDOM() {
+            const sidebarAv = document.getElementById('sidebar-avatar-target');
+            const mainAv = document.getElementById('profile-pane-avatar-view');
+            
+            if(profile && profile.avatar) {
+                if(sidebarAv) {
+                    if(profile.avatar.startsWith('http')) {
+                        sidebarAv.innerText = ''; sidebarAv.style.backgroundImage = `url('${profile.avatar}')`;
+                        if(mainAv) { mainAv.innerText = ''; mainAv.style.backgroundImage = `url('${profile.avatar}')`; }
+                    } else {
+                        sidebarAv.style.backgroundImage = 'none'; sidebarAv.innerText = profile.avatar;
+                        if(mainAv) { mainAv.style.backgroundImage = 'none'; mainAv.innerText = profile.avatar; }
+                    }
+                }
+            } else {
+                if(sidebarAv) {
+                    sidebarAv.style.backgroundImage = 'none'; sidebarAv.innerText = '🤖';
+                    if(mainAv) { mainAv.style.backgroundImage = 'none'; mainAv.innerText = '🤖'; }
+                }
+            }
+        }
+
         function performLogin() {
             const phone = document.getElementById('user-phone').value.trim();
             const nick = document.getElementById('user-nick').value.trim();
-            if(!phone || !nick) return alert("Complete the fields!");
-            profile = { phone, nick }; localStorage.setItem('as3_profile', JSON.stringify(profile));
+            if(!phone || !nick) return alert("Wypełnij wymagane pola!");
+            profile = { phone, nick, avatar: '🤖' }; 
+            localStorage.setItem('as3_profile', JSON.stringify(profile));
             syncIdentityUI(); initializeP2P();
         }
+
         function performLogout() {
             localStorage.removeItem('as3_profile'); profile = null;
             syncIdentityUI(); if(peer) peer.destroy(); initializeP2P();
         }
+
         function syncIdentityUI() {
+            const unregForm = document.getElementById('unregistered-form');
+            const regBadge = document.getElementById('registered-badge');
             if(profile) {
-                document.getElementById('unregistered-form').style.display = 'none';
-                document.getElementById('registered-badge').style.display = 'flex';
-                document.getElementById('view-nick').innerText = profile.nick;
-                document.getElementById('view-phone').innerText = "ID: " + profile.phone;
+                if(unregForm) unregForm.style.display = 'none';
+                if(regBadge) {
+                    regBadge.style.display = 'flex';
+                    document.getElementById('view-nick').innerText = profile.nick;
+                    document.getElementById('view-phone').innerText = "Węzeł ID: " + profile.phone;
+                }
                 document.getElementById('name-indicator').innerText = profile.nick;
+                renderAvatarLibrary();
             } else {
-                document.getElementById('unregistered-form').style.display = 'flex';
-                document.getElementById('registered-badge').style.display = 'none';
+                if(unregForm) unregForm.style.display = 'flex';
+                if(regBadge) regBadge.style.display = 'none';
                 document.getElementById('name-indicator').innerText = "(Nazwa)";
             }
+            updateAvatarDOM();
         }
 
-        // --- CONFIGURATION SETUP ---
-        changeLanguage(currentLanguage);
-        applyCustomColor(currentThemeColor);
-        const activeWall = localStorage.getItem('as3_wallpaper');
-        if(activeWall) {
-            document.documentElement.style.setProperty('--bg-image', `url('${activeWall}')`);
-            document.getElementById('wallpaper-input').value = activeWall;
-        }
+        // --- INICJALIZACJA STARTOWA ---
+        const savedTheme = localStorage.getItem('as3_solid_theme') || 'dark';
+        setTheme(savedTheme);
+        const savedColor = localStorage.getItem('as3_solid_color') || '#00a2ed';
+        applyCustomColor(savedColor); document.getElementById('color-picker').value = savedColor;
+        
+        const savedWall = localStorage.getItem('as3_active_wallpaper_url');
+        if(savedWall) document.documentElement.style.setProperty('--bg-image', savedWall);
+
+        const savedOS = localStorage.getItem('as3_optimized_os') || 'win11';
+        applyOSOptimization(savedOS);
 
         document.getElementById('message-field').addEventListener('keypress', e => { if(e.key === 'Enter') transmitMessage(); });
+        
+        changeLanguage(currentLang);
         renderContactsList(); syncIdentityUI(); renderPostsFeed(); initializeP2P();
     </script>
 </body>
